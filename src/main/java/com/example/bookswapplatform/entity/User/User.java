@@ -1,13 +1,14 @@
-package com.example.bookswapplatform.entity;
+package com.example.bookswapplatform.entity.User;
 
 import com.example.bookswapplatform.common.Gender;
 import com.example.bookswapplatform.entity.Post.Post;
+import com.example.bookswapplatform.entity.Role.Role;
 import com.example.bookswapplatform.utils.DateTimeUtils;
 import com.fasterxml.jackson.annotation.JsonFormat;
 import jakarta.persistence.*;
 import lombok.*;
+import org.hibernate.annotations.ColumnDefault;
 import org.hibernate.annotations.UuidGenerator;
-import org.springframework.data.annotation.CreatedBy;
 import org.springframework.data.annotation.CreatedDate;
 import org.springframework.data.annotation.LastModifiedBy;
 import org.springframework.data.annotation.LastModifiedDate;
@@ -58,6 +59,8 @@ public class User implements UserDetails {
     @Enumerated(EnumType.STRING)
     private Gender gender;
 
+    @Column(columnDefinition = "boolean")
+    @ColumnDefault("true")
     private boolean isEnable;
 
     @CreatedDate
@@ -77,12 +80,21 @@ public class User implements UserDetails {
 
     private String provider;
 
+    private String fireBaseUid;
+
+    @Column(columnDefinition = "float")
+    @ColumnDefault("0")
+    private float totalRate;
+
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "role_id", referencedColumnName = "id")
     private Role role;
 
     @OneToMany(mappedBy = "user")
     private List<Post> postList;
+
+    @OneToMany(mappedBy = "user")
+    private List<Rate> rates;
 
     @Override
     public Collection<? extends GrantedAuthority> getAuthorities() {

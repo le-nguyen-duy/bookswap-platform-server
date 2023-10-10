@@ -1,5 +1,6 @@
-package com.example.bookswapplatform.entity;
+package com.example.bookswapplatform.entity.Role;
 
+import com.example.bookswapplatform.entity.Role.Role;
 import com.example.bookswapplatform.utils.DateTimeUtils;
 import com.fasterxml.jackson.annotation.JsonFormat;
 import jakarta.persistence.*;

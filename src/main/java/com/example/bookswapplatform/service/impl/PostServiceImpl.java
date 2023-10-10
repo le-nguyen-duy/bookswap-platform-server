@@ -1,2 +1,4 @@
-package com.example.bookswapplatform.service.impl;public class PostServiceImpl {
+package com.example.bookswapplatform.service.impl;
+
+public class PostServiceImpl {
 }

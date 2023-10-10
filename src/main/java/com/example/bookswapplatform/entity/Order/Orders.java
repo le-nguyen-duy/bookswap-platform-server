@@ -1,6 +1,5 @@
 package com.example.bookswapplatform.entity.Order;
 
-import com.example.bookswapplatform.common.Gender;
 import com.example.bookswapplatform.entity.Book.Book;
 import com.example.bookswapplatform.entity.Post.Post;
 import com.example.bookswapplatform.utils.DateTimeUtils;
@@ -29,9 +28,10 @@ import java.util.UUID;
 @Setter
 @EntityListeners(AuditingEntityListener.class)
 @Builder
-public class Order {
+public class Orders {
     @Id
     @UuidGenerator(style = UuidGenerator.Style.RANDOM)
+    @Column(name = "order_id")
     private UUID id;
 
     private BigDecimal price;

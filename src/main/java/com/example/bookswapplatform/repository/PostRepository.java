@@ -1,2 +1,4 @@
-package com.example.bookswapplatform.repository;public interface PostRepository {
+package com.example.bookswapplatform.repository;
+
+public interface PostRepository {
 }
