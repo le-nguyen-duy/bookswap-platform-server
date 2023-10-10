@@ -1,6 +1,5 @@
 package com.example.bookswapplatform.controller;
 
-import com.example.bookswapplatform.dto.BaseResponseDTO;
 import com.example.bookswapplatform.security.firebase.service.UserManagementService;
 import com.google.firebase.auth.FirebaseAuthException;
 import lombok.RequiredArgsConstructor;
@@ -8,12 +7,11 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.security.Principal;
-import java.util.List;
 
 @RestController
-@RequestMapping("api/v1/admin")
+@RequestMapping("api/v1/guest")
 @RequiredArgsConstructor
-public class AdminController {
+public class GuestController {
     private final UserManagementService userManagementService;
 
     @PostMapping("/user-claims")

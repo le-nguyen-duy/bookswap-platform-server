@@ -1,5 +1,28 @@
 package com.example.bookswapplatform.dto;
 
-public class BaseResponeDTO {
-    private 
+import com.example.bookswapplatform.utils.DateTimeUtils;
+import com.fasterxml.jackson.annotation.JsonFormat;
+import lombok.*;
+import org.springframework.http.HttpStatus;
+
+import java.time.LocalDateTime;
+import java.util.List;
+
+@Getter
+@Setter
+@AllArgsConstructor
+@NoArgsConstructor
+@Builder
+public class BaseResponseDTO {
+    @JsonFormat(shape = JsonFormat.Shape.STRING, pattern = DateTimeUtils.DATETIME_FORMAT)
+    private LocalDateTime timestamp;
+    private HttpStatus status;
+    private String message;
+    private Object data;
+
+    public BaseResponseDTO(LocalDateTime timestamp, HttpStatus status, String message) {
+        this.timestamp = timestamp;
+        this.status = status;
+        this.message = message;
+    }
 }

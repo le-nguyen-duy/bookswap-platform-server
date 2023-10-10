@@ -1,7 +1,6 @@
 package com.example.bookswapplatform.security.firebase.service.impl;
 
-import com.example.bookswapplatform.entity.User;
-import com.example.bookswapplatform.repository.AuthorityRepository;
+import com.example.bookswapplatform.entity.User.User;
 import com.example.bookswapplatform.repository.RoleRepository;
 import com.example.bookswapplatform.repository.UserRepository;
 import com.example.bookswapplatform.security.firebase.service.UserManagementService;
@@ -29,9 +28,11 @@ public class UserManagementServiceImpl implements UserManagementService {
             //lưu user đăng nhập từ google vào database
             User user = new User();
             user.setEmail(userRecord.getEmail());
-            user.setProvider(userRecord.getProviderData());
+            user.setProvider(Arrays.toString(userRecord.getProviderData()));
             user.setImage(userRecord.getPhotoUrl());
+            user.setFireBaseUid(uid);
             user.setRole(roleRepository.findByName("USER"));
+            user.setEnable(true);
             userRepository.save(user);
             //set claims cho idToken
             Map<String, Object> claims = convertAuthoritiesToClaims(user.getAuthorities());
@@ -42,16 +43,31 @@ public class UserManagementServiceImpl implements UserManagementService {
 
     }
 
+    //Chuyển danh sách authorities thành claims
     public Map<String, Object> convertAuthoritiesToClaims(Collection<? extends GrantedAuthority> authorities) {
         Map<String, Object> claims = new HashMap<>();
-        AtomicInteger i = new AtomicInteger(1);
-        // Chuyển đổi danh sách authorities thành một map claims
-        authorities.forEach(authority -> {
-            claims.put("authority" + i.getAndIncrement(), authority.getAuthority());
-        });
+        List<String> authorityValues = new ArrayList<>();
+        String role = null;
+
+        for (GrantedAuthority authority : authorities) {
+            String authorityValue = authority.getAuthority();
+
+            if (authorityValue.startsWith("ROLE_")) {
+                role = authorityValue;
+            } else {
+                authorityValues.add(authorityValue);
+            }
+        }
+
+        claims.put("authority", authorityValues);
+
+        if (role != null) {
+            claims.put("role", role);
+        }
 
         return claims;
     }
+
 
 }
 
