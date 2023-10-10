@@ -1,0 +1,121 @@
+package com.example.bookswapplatform.entity;
+
+import com.example.bookswapplatform.common.Gender;
+import com.example.bookswapplatform.entity.Post.Post;
+import com.example.bookswapplatform.utils.DateTimeUtils;
+import com.fasterxml.jackson.annotation.JsonFormat;
+import jakarta.persistence.*;
+import lombok.*;
+import org.hibernate.annotations.UuidGenerator;
+import org.springframework.data.annotation.CreatedBy;
+import org.springframework.data.annotation.CreatedDate;
+import org.springframework.data.annotation.LastModifiedBy;
+import org.springframework.data.annotation.LastModifiedDate;
+import org.springframework.data.jpa.domain.support.AuditingEntityListener;
+import org.springframework.format.annotation.DateTimeFormat;
+import org.springframework.security.core.GrantedAuthority;
+import org.springframework.security.core.userdetails.UserDetails;
+
+import javax.validation.constraints.Email;
+import javax.validation.constraints.Size;
+import java.time.LocalDate;
+import java.time.LocalDateTime;
+import java.util.Collection;
+import java.util.List;
+import java.util.UUID;
+
+@Entity
+@NoArgsConstructor
+@AllArgsConstructor
+@Getter
+@Setter
+@EntityListeners(AuditingEntityListener.class)
+@Builder
+public class User implements UserDetails {
+    @Id
+    @UuidGenerator(style = UuidGenerator.Style.RANDOM)
+    private UUID id;
+
+    private String lastName;
+
+    private String firstName;
+
+    @Size(min = 10, max = 12, message = "Phone number must be between 10 and 12 digits")
+    private int phoneNum;
+
+    private int idCard;
+
+    @Column(unique = true)
+    @Email
+    private String email;
+
+    private String passWord;
+
+    @JsonFormat(shape = JsonFormat.Shape.STRING, pattern = DateTimeUtils.DATE_FORMAT)
+    @DateTimeFormat(pattern = DateTimeUtils.DATE_FORMAT)
+    private LocalDate dateOfBirth;
+
+    @Enumerated(EnumType.STRING)
+    private Gender gender;
+
+    private boolean isEnable;
+
+    @CreatedDate
+    @JsonFormat(shape = JsonFormat.Shape.STRING, pattern = DateTimeUtils.DATETIME_FORMAT)
+    @DateTimeFormat(pattern = DateTimeUtils.DATETIME_FORMAT)
+    private LocalDateTime createDate;
+
+    @LastModifiedDate
+    @JsonFormat(shape = JsonFormat.Shape.STRING, pattern = DateTimeUtils.DATETIME_FORMAT)
+    @DateTimeFormat(pattern = DateTimeUtils.DATETIME_FORMAT)
+    private LocalDateTime updateDate;
+
+    @LastModifiedBy
+    private String updateBy;
+
+    private String image;
+
+    private String provider;
+
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "role_id", referencedColumnName = "id")
+    private Role role;
+
+    @OneToMany(mappedBy = "user")
+    private List<Post> postList;
+
+    @Override
+    public Collection<? extends GrantedAuthority> getAuthorities() {
+        return role.getAuthor();
+    }
+
+    @Override
+    public String getPassword() {
+        return passWord;
+    }
+
+    @Override
+    public String getUsername() {
+        return email;
+    }
+
+    @Override
+    public boolean isAccountNonExpired() {
+        return true;
+    }
+
+    @Override
+    public boolean isAccountNonLocked() {
+        return true;
+    }
+
+    @Override
+    public boolean isCredentialsNonExpired() {
+        return true;
+    }
+
+    @Override
+    public boolean isEnabled() {
+        return isEnable;
+    }
+}
