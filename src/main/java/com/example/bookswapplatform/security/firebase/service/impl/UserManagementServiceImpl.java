@@ -1,5 +1,6 @@
 package com.example.bookswapplatform.security.firebase.service.impl;
 
+import com.example.bookswapplatform.dto.BaseResponseDTO;
 import com.example.bookswapplatform.entity.User.User;
 import com.example.bookswapplatform.repository.RoleRepository;
 import com.example.bookswapplatform.repository.UserRepository;
@@ -8,9 +9,12 @@ import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.auth.FirebaseAuthException;
 import com.google.firebase.auth.UserRecord;
 import lombok.RequiredArgsConstructor;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.stereotype.Service;
 
+import java.time.LocalDateTime;
 import java.util.*;
 import java.util.concurrent.atomic.AtomicInteger;
 
@@ -21,7 +25,7 @@ public class UserManagementServiceImpl implements UserManagementService {
     private final RoleRepository roleRepository;
     private final UserRepository userRepository;
     @Override
-    public void setUserClaims(String uid) throws FirebaseAuthException {
+    public ResponseEntity<BaseResponseDTO> setUserClaims(String uid) throws FirebaseAuthException {
         UserRecord userRecord = firebaseAuth.getUser(uid);
         //kiểm tra user đã tồn tại trong hệ thống chưa
         if(userRepository.findByEmail(userRecord.getEmail()).isEmpty()) {
@@ -38,6 +42,7 @@ public class UserManagementServiceImpl implements UserManagementService {
             Map<String, Object> claims = convertAuthoritiesToClaims(user.getAuthorities());
             firebaseAuth.setCustomUserClaims(uid, claims);
         }
+        return ResponseEntity.ok(new BaseResponseDTO(LocalDateTime.now(), HttpStatus.CREATED, "Successfully"));
 
         //revoked idToken để client dùng refesh token tạo 1 idToken mới có chứa claims
 

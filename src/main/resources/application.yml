@@ -10,6 +10,9 @@ spring:
     url: jdbc:mysql://localhost:3308/book_swap
     username: root
     password: 1234
+    #    url: jdbc:mysql://${MYSQL_HOST:localhost}:${MYSQL_PORT:3306}/book_swap
+    #    username: ${MYSQL_USERNAME:root}
+    #    password: ${MYSQL_PASSWORD:1234}
     driver-class-name: com.mysql.cj.jdbc.Driver
   security:
       oauth2:
@@ -36,7 +39,9 @@ springdoc:
     operations-sorter: method
     path: /swagger-ui.html
 
-  paths-to-exclude: /authorities/**, /books/**, /orderses/**, /profile/**, /roles/**, /users/**, /authors/**, /bookImages/**
+  paths-to-exclude: /authorities/**, /books/**, /orderses/**, /profile/**,
+    /roles/**, /users/**, /authors/**, /bookImages/**, /mainCategories/**,
+    /postStatuses/**, /posts/**, /areas/**, /districts/**, /orderDetails/**, /payments/**, /transactions/**, /userWallets/**
 
 #application:
 #  security:

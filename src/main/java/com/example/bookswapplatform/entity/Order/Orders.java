@@ -1,16 +1,17 @@
 package com.example.bookswapplatform.entity.Order;
 
-import com.example.bookswapplatform.entity.Book.Book;
+import com.example.bookswapplatform.entity.Area.Area;
+import com.example.bookswapplatform.entity.Area.District;
+import com.example.bookswapplatform.entity.Payment.Payment;
 import com.example.bookswapplatform.entity.Post.Post;
+import com.example.bookswapplatform.entity.User.User;
 import com.example.bookswapplatform.utils.DateTimeUtils;
 import com.fasterxml.jackson.annotation.JsonFormat;
 import jakarta.persistence.*;
 import lombok.*;
 import org.hibernate.annotations.ColumnDefault;
 import org.hibernate.annotations.UuidGenerator;
-import org.springframework.data.annotation.CreatedBy;
 import org.springframework.data.annotation.CreatedDate;
-import org.springframework.data.annotation.LastModifiedBy;
 import org.springframework.data.annotation.LastModifiedDate;
 import org.springframework.data.jpa.domain.support.AuditingEntityListener;
 import org.springframework.format.annotation.DateTimeFormat;
@@ -31,12 +32,19 @@ import java.util.UUID;
 public class Orders {
     @Id
     @UuidGenerator(style = UuidGenerator.Style.RANDOM)
-    @Column(name = "order_id")
     private UUID id;
 
     private BigDecimal price;
 
     private String note;
+
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "area_id")
+    private Area area;
+
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "district_id")
+    private District district;
 
     @Column(columnDefinition = "boolean")
     @ColumnDefault("false")
@@ -64,20 +72,22 @@ public class Orders {
     @DateTimeFormat(pattern = DateTimeUtils.DATETIME_FORMAT)
     private LocalDateTime updateDate;
 
-    @CreatedBy
-    private String createBy;
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "user_id")
+    private User createBy;
 
-    @LastModifiedBy
     private String updateBy;
 
     @Enumerated(EnumType.STRING)
     private OrderStatus orderStatus;
 
-    @OneToOne(cascade = CascadeType.ALL)
-    @JoinColumn(name = "post_id" , referencedColumnName = "id")
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "post_id")
     private Post post;
 
-    @ManyToMany
-    @JoinTable(name = "order_detail", joinColumns = @JoinColumn(name = "order_id"), inverseJoinColumns = @JoinColumn(name = "book_id"))
-    Set<Book> books;
+    @OneToMany(mappedBy = "orders", cascade = CascadeType.ALL)
+    private Set<OrderDetail> orderDetails;
+
+    @OneToMany(mappedBy = "orders" ,cascade = CascadeType.ALL)
+    private Set<Payment> payments;
 }

@@ -1,5 +1,6 @@
-package com.example.bookswapplatform.entity;
+package com.example.bookswapplatform.entity.Area;
 
+import com.example.bookswapplatform.entity.Order.Orders;
 import com.example.bookswapplatform.entity.Post.Post;
 import jakarta.persistence.Entity;
 import jakarta.persistence.EntityListeners;
@@ -27,9 +28,13 @@ public class Area {
 
     private String city;
 
-    private String district;
+    @OneToMany(mappedBy = "city")
+    private Set<District> districts;
 
     @OneToMany(mappedBy = "area")
     private Set<Post> posts;
+
+    @OneToMany(mappedBy = "area")
+    private Set<Orders> orders;
 
 }

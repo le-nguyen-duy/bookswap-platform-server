@@ -1,22 +1,28 @@
 package com.example.bookswapplatform.entity.Book;
 
-import com.example.bookswapplatform.entity.Order.Orders;
+import com.example.bookswapplatform.entity.Order.OrderDetail;
 import com.example.bookswapplatform.entity.Post.Post;
 import com.example.bookswapplatform.entity.User.User;
 import com.example.bookswapplatform.utils.DateTimeUtils;
 import com.fasterxml.jackson.annotation.JsonFormat;
-import com.fasterxml.jackson.annotation.JsonIgnore;
 import jakarta.persistence.*;
+import jakarta.validation.constraints.Max;
+import jakarta.validation.constraints.Min;
 import lombok.*;
 import org.hibernate.annotations.ColumnDefault;
+import org.hibernate.annotations.FilterDef;
 import org.hibernate.annotations.UuidGenerator;
-import org.springframework.data.annotation.CreatedBy;
+import org.hibernate.annotations.Where;
 import org.springframework.data.annotation.CreatedDate;
-import org.springframework.data.annotation.LastModifiedBy;
 import org.springframework.data.annotation.LastModifiedDate;
 import org.springframework.data.jpa.domain.support.AuditingEntityListener;
 import org.springframework.format.annotation.DateTimeFormat;
 
+import javax.validation.constraints.Digits;
+
+import javax.validation.constraints.Pattern;
+import javax.validation.constraints.Size;
+import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.*;
@@ -28,6 +34,8 @@ import java.util.*;
 @Setter
 @EntityListeners(AuditingEntityListener.class)
 @Builder
+
+@Where(clause = "deleted=false")
 public class Book {
     @Id
     @UuidGenerator(style = UuidGenerator.Style.RANDOM)
@@ -50,25 +58,43 @@ public class Book {
 
     private int pageCount;
 
+    private BigDecimal price;
+
+    @Size(min = 1, max = 3, message = "New percent only in 0 and 100%")
+    @Pattern(regexp = "\\d+", message = "New percent must contain only digits")
+    private String newPercent;
+
     @ColumnDefault("false")
     private boolean isDone;
 
-    @ManyToMany(mappedBy = "books")
-    Set<Author> authors;
+    private boolean deleted = Boolean.FALSE;
+
+    @ManyToMany(fetch = FetchType.EAGER)
+    @JoinTable(name = "book_author", joinColumns = @JoinColumn(name = "book_id", referencedColumnName = "id"),
+            inverseJoinColumns = @JoinColumn(name = "author_id", referencedColumnName = "id"))
+    private Set<Author> authors;
 
     @OneToMany(mappedBy = "book")
     private Set<BookImage> bookImages;
 
     @ManyToOne
-    @JoinColumn(name = "category_id")
-    private MainCategory category;
+    @JoinColumn(name = "main_category_id")
+    private MainCategory mainCategory;
+
+//    @ManyToOne
+//    @JoinColumn(name = "sub_category_id")
+    private String subCategory;
+
+//    @ManyToOne
+//    @JoinColumn(name = "sub_sub_category_id")
+    private String subSubCategory;
 
     @ManyToOne
     @JoinColumn(name = "post_id")
     private Post post;
 
-    @ManyToMany(mappedBy = "books")
-    Set<Orders> ordersSet;
+    @OneToMany(mappedBy = "book", cascade = CascadeType.ALL)
+    private Set<OrderDetail> orderDetails;
 
     @CreatedDate
     @JsonFormat(shape = JsonFormat.Shape.STRING, pattern = DateTimeUtils.DATETIME_FORMAT)
@@ -80,7 +106,9 @@ public class Book {
     @DateTimeFormat(pattern = DateTimeUtils.DATETIME_FORMAT)
     private LocalDateTime updateDate;
 
-    private String createdBy;
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "user_id")
+    private User createBy;
 
     private String updateBy;
 

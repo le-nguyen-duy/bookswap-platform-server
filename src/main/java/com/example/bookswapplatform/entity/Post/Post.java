@@ -1,23 +1,22 @@
 package com.example.bookswapplatform.entity.Post;
 
 import com.example.bookswapplatform.common.ExchangeMethod;
-import com.example.bookswapplatform.entity.Area;
+import com.example.bookswapplatform.entity.Area.Area;
+import com.example.bookswapplatform.entity.Area.District;
 import com.example.bookswapplatform.entity.Book.Book;
 import com.example.bookswapplatform.entity.Order.Orders;
 import com.example.bookswapplatform.entity.User.User;
 import com.example.bookswapplatform.utils.DateTimeUtils;
 import com.fasterxml.jackson.annotation.JsonFormat;
 import jakarta.persistence.*;
+import jakarta.persistence.CascadeType;
 import lombok.*;
-import org.hibernate.annotations.UuidGenerator;
-import org.springframework.data.annotation.CreatedBy;
+import org.hibernate.annotations.*;
 import org.springframework.data.annotation.CreatedDate;
-import org.springframework.data.annotation.LastModifiedBy;
 import org.springframework.data.annotation.LastModifiedDate;
 import org.springframework.data.jpa.domain.support.AuditingEntityListener;
 import org.springframework.format.annotation.DateTimeFormat;
 
-import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.util.Set;
 import java.util.UUID;
@@ -29,6 +28,8 @@ import java.util.UUID;
 @Setter
 @EntityListeners(AuditingEntityListener.class)
 @Builder
+
+@Where(clause = "deleted=false")
 public class Post {
     @Id
     @UuidGenerator(style = UuidGenerator.Style.RANDOM)
@@ -41,8 +42,6 @@ public class Post {
     @Enumerated(EnumType.STRING)
     private ExchangeMethod exchangeMethod;
 
-    private BigDecimal price;
-
     @CreatedDate
     @JsonFormat(shape = JsonFormat.Shape.STRING, pattern = DateTimeUtils.DATETIME_FORMAT)
     @DateTimeFormat(pattern = DateTimeUtils.DATETIME_FORMAT)
@@ -53,17 +52,15 @@ public class Post {
     @DateTimeFormat(pattern = DateTimeUtils.DATETIME_FORMAT)
     private LocalDateTime updateDate;
 
-    @CreatedBy
-    private String createBy;
-
-    @LastModifiedBy
     private String updateBy;
+
+    private int views;
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "user_id")
-    private User user;
+    private User createBy;
 
-    @OneToMany(mappedBy = "post")
+    @OneToMany(mappedBy = "post", cascade = CascadeType.ALL)
     private Set<Book> books;
 
     @ManyToOne(fetch = FetchType.LAZY)
@@ -74,8 +71,14 @@ public class Post {
     @JoinColumn(name = "area_id")
     private Area area;
 
-    @OneToOne(mappedBy = "post")
-    private Orders orders;
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "district_id")
+    private District district;
+
+    @OneToMany(mappedBy = "post", cascade = CascadeType.ALL)
+    private Set<Orders> ordersSet;
+
+    private boolean deleted = Boolean.FALSE;
 
 
 
