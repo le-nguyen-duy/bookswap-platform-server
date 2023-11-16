@@ -37,6 +37,7 @@ public class UserManagementServiceImpl implements UserManagementService {
             user.setFireBaseUid(uid);
             user.setRole(roleRepository.findByName("USER"));
             user.setEnable(true);
+            user.setPhone(null);
             userRepository.save(user);
             //set claims cho idToken
             Map<String, Object> claims = convertAuthoritiesToClaims(user.getAuthorities());

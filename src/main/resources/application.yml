@@ -19,6 +19,7 @@ spring:
         resource-server:
           jwt:
             jwk-set-uri: https://www.googleapis.com/service_accounts/v1/jwk/securetoken%40system.gserviceaccount.com
+#            jwk-set-uri: https://www.googleapis.com/oauth2/v3/certs
             issuer-uri: https://securetoken.google.com/bookswapplatform
 
   jpa:
