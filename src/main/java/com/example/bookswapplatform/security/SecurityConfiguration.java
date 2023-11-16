@@ -12,6 +12,8 @@ import org.springframework.security.config.annotation.web.configurers.AbstractHt
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.oauth2.server.resource.authentication.JwtAuthenticationConverter;
 import org.springframework.security.web.SecurityFilterChain;
+import org.springframework.security.web.servlet.util.matcher.MvcRequestMatcher;
+import org.springframework.web.servlet.handler.HandlerMappingIntrospector;
 
 import java.util.Collection;
 import java.util.Optional;
@@ -37,13 +39,14 @@ public class SecurityConfiguration {
             "/swagger-ui.html"};
 
     @Bean
-    public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
+    public SecurityFilterChain securityFilterChain(HttpSecurity http, HandlerMappingIntrospector introspector) throws Exception {
+        MvcRequestMatcher.Builder mvcMatcherBuilder = new MvcRequestMatcher.Builder(introspector).servletPath("/path");
         http
                 .csrf(AbstractHttpConfigurer::disable)
                 .authorizeHttpRequests(authorize -> authorize
                         .requestMatchers(WHITE_LIST_URL).permitAll()
-                        .requestMatchers("/api/v1/user/**").hasAnyAuthority("PROFILE:READ")
-                        .requestMatchers("/api/v1/book/**").hasAnyAuthority("BOOK:READ","BOOK:CREATE","BOOK:MODIFY","BOOK:DELETE")
+                        .requestMatchers(mvcMatcherBuilder.pattern("/api/v1/user/**")).hasAnyAuthority("PROFILE:READ")
+                        .requestMatchers(mvcMatcherBuilder.pattern("/api/v1/book/**")).hasAnyAuthority("BOOK:READ","BOOK:CREATE","BOOK:MODIFY","BOOK:DELETE")
                         .anyRequest().authenticated()
                 )
                 .exceptionHandling(httpSecurityExceptionHandlingConfigurer -> httpSecurityExceptionHandlingConfigurer.accessDeniedHandler(accessDeniedHandler))
