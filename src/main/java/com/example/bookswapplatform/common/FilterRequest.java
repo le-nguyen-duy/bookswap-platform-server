@@ -1,5 +1,6 @@
 package com.example.bookswapplatform.common;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import jakarta.annotation.Nullable;
 import lombok.*;
 

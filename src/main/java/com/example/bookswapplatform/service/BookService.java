@@ -18,5 +18,6 @@ public interface BookService {
     ResponseEntity<BaseResponseDTO> getUserBooksInPost (Principal principal, int pageNumber, int pageSize);
     ResponseEntity<BaseResponseDTO> modifyBook(Principal principal, UUID bookId, BookRequest bookRequest);
     ResponseEntity<BaseResponseDTO> deleteBook(UUID bookId);
+    ResponseEntity<BaseResponseDTO> findById(UUID bookId);
 
 }

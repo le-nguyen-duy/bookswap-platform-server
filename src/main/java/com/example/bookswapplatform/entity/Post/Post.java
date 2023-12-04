@@ -10,6 +10,7 @@ import com.example.bookswapplatform.utils.DateTimeUtils;
 import com.fasterxml.jackson.annotation.JsonFormat;
 import jakarta.persistence.*;
 import jakarta.persistence.CascadeType;
+import jakarta.validation.constraints.NotEmpty;
 import lombok.*;
 import org.hibernate.annotations.*;
 import org.springframework.data.annotation.CreatedDate;
@@ -60,6 +61,7 @@ public class Post {
     @JoinColumn(name = "user_id")
     private User createBy;
 
+    @NotEmpty
     @OneToMany(mappedBy = "post", cascade = CascadeType.ALL)
     private Set<Book> books;
 
@@ -80,6 +82,12 @@ public class Post {
 
     private boolean deleted = Boolean.FALSE;
 
+    public void checkAndSetLockedStatus(PostStatus postStatus) {
+        boolean allBooksLocked = books.stream().allMatch(Book::isLock);
+        if (allBooksLocked) {
+            setPostStatus(postStatus);
+        }
+    }
 
 
 }

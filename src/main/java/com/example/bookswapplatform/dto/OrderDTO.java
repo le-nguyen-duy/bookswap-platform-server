@@ -19,7 +19,12 @@ import java.util.UUID;
 @NoArgsConstructor
 public class OrderDTO {
     private UUID id;
-    private BigDecimal price;
+    private BigDecimal senderPrice;
+    private BigDecimal receiverPrice;
+    private BigDecimal bookPrice;
+    private BigDecimal senderShipPrice;
+    private BigDecimal receiverShipPrice;
+    private BigDecimal fee;
     private String note;
     private boolean isConfirm;
     private boolean isPayment;
@@ -33,11 +38,11 @@ public class OrderDTO {
     private LocalDateTime createDate;
     @JsonFormat(shape = JsonFormat.Shape.STRING, pattern = DateTimeUtils.DATETIME_FORMAT)
     private LocalDateTime updateDate;
-    private String createBy;
-    private String updateBy;
+    private UserOrderDTO userOrderDTO;
+    private String cancelBy;
     private OrderStatus orderStatus;
     private PostDTO postDTO;
-    private Set<BookDTO> bookTradeDTOS;
+    private Set<BookGeneralDTO> bookTradeDTOS;
     private Set<PaymentDTO> paymentDTOS;
 
 }

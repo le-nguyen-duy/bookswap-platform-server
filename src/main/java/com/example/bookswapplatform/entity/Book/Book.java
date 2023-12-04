@@ -62,9 +62,12 @@ public class Book {
     @ColumnDefault("false")
     private boolean isDone;
 
+    @ColumnDefault("false")
+    private boolean isLock;
+
     private boolean deleted = Boolean.FALSE;
 
-    @ManyToMany(fetch = FetchType.EAGER)
+    @ManyToMany(fetch = FetchType.LAZY)
     @JoinTable(name = "book_author", joinColumns = @JoinColumn(name = "book_id", referencedColumnName = "id"),
             inverseJoinColumns = @JoinColumn(name = "author_id", referencedColumnName = "id"))
     private Set<Author> authors;
@@ -72,19 +75,17 @@ public class Book {
     @OneToMany(mappedBy = "book")
     private Set<BookImage> bookImages;
 
-    @ManyToOne
+    private String coverImage;
+
+    @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "main_category_id")
     private MainCategory mainCategory;
 
-//    @ManyToOne
-//    @JoinColumn(name = "sub_category_id")
     private String subCategory;
 
-//    @ManyToOne
-//    @JoinColumn(name = "sub_sub_category_id")
     private String subSubCategory;
 
-    @ManyToOne
+    @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "post_id")
     private Post post;
 

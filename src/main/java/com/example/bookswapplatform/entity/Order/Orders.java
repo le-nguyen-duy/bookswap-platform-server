@@ -4,6 +4,7 @@ import com.example.bookswapplatform.entity.Area.Area;
 import com.example.bookswapplatform.entity.Area.District;
 import com.example.bookswapplatform.entity.Payment.Payment;
 import com.example.bookswapplatform.entity.Post.Post;
+import com.example.bookswapplatform.entity.User.Rate;
 import com.example.bookswapplatform.entity.User.User;
 import com.example.bookswapplatform.utils.DateTimeUtils;
 import com.fasterxml.jackson.annotation.JsonFormat;
@@ -34,7 +35,12 @@ public class Orders {
     @UuidGenerator(style = UuidGenerator.Style.RANDOM)
     private UUID id;
 
-    private BigDecimal price;
+    private BigDecimal senderPrice;
+    private BigDecimal receiverPrice;
+    private BigDecimal bookPrice;
+    private BigDecimal senderShipPrice;
+    private BigDecimal receiverShipPrice;
+    private BigDecimal fee;
 
     private String note;
 
@@ -67,6 +73,10 @@ public class Orders {
     @DateTimeFormat(pattern = DateTimeUtils.DATETIME_FORMAT)
     private LocalDateTime createDate;
 
+    @JsonFormat(shape = JsonFormat.Shape.STRING, pattern = DateTimeUtils.DATETIME_FORMAT)
+    @DateTimeFormat(pattern = DateTimeUtils.DATETIME_FORMAT)
+    private LocalDateTime autoRejectTime;
+
     @LastModifiedDate
     @JsonFormat(shape = JsonFormat.Shape.STRING, pattern = DateTimeUtils.DATETIME_FORMAT)
     @DateTimeFormat(pattern = DateTimeUtils.DATETIME_FORMAT)
@@ -75,6 +85,7 @@ public class Orders {
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "user_id")
     private User createBy;
+    private String userCancel;
 
     private String updateBy;
 
@@ -90,4 +101,7 @@ public class Orders {
 
     @OneToMany(mappedBy = "orders" ,cascade = CascadeType.ALL)
     private Set<Payment> payments;
+
+    @OneToOne(mappedBy = "orders")
+    private Rate rate;
 }

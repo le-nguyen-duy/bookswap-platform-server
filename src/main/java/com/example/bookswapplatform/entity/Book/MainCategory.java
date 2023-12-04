@@ -35,4 +35,7 @@ public class MainCategory {
     @OneToMany(mappedBy = "mainCategory")
     private Set<Book> books;
 
+    @OneToMany(mappedBy = "mainCategory")
+    private Set<BookSystem> bookSystems;
+
 }

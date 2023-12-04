@@ -9,10 +9,12 @@ import com.example.bookswapplatform.entity.Area.District;
 import com.example.bookswapplatform.entity.Book.Author;
 import com.example.bookswapplatform.entity.Book.Book;
 import com.example.bookswapplatform.entity.Post.Post;
+import com.example.bookswapplatform.entity.Post.PostStatus;
 import com.example.bookswapplatform.entity.User.User;
 import com.example.bookswapplatform.exception.ResourceNotFoundException;
 import com.example.bookswapplatform.repository.*;
 import com.example.bookswapplatform.service.PostService;
+import com.example.bookswapplatform.service.PostServiceHelper;
 import lombok.RequiredArgsConstructor;
 import org.modelmapper.Condition;
 import org.modelmapper.ModelMapper;
@@ -30,7 +32,7 @@ import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
-public class PostServiceImpl implements PostService {
+public class PostServiceImpl implements PostService, PostServiceHelper {
     private final UserRepository userRepository;
     private final PostRepository postRepository;
     private final PostStatusRepository postStatusRepository;
@@ -51,19 +53,14 @@ public class PostServiceImpl implements PostService {
         post.setPostStatus(postStatusRepository.findByName("ACTIVE")
                 .orElseThrow(()->new ResourceNotFoundException("Post status: ACTIVE Not Found!")));
 
-        for (UUID bookId: postRequest.getBookIds()
+        for (BookPriceDTO bookPriceDTO: postRequest.getBookPriceDTOS()
              ) {
-            Book book = new Book();
-            book = bookRepository.findById(bookId)
-                    .orElseThrow(() -> new ResourceNotFoundException("Book with id:" + bookId + "Not Found!"));
-            // set book price if Trade, give price = 0
+            Book book = bookRepository.findById(bookPriceDTO.getBookPriceId())
+                    .orElseThrow(() -> new ResourceNotFoundException("Book with id:" + bookPriceDTO.getBookPriceId() + "Not Found!"));
             if(postRequest.getExchangeMethod().equals("TRADE") || postRequest.getExchangeMethod().equals("GIVE") ) {
                 book.setPrice(BigDecimal.valueOf(0));
             } else {
-                for (BigDecimal price: postRequest.getPrice()
-                     ) {
-                    book.setPrice(price);
-                }
+                book.setPrice(bookPriceDTO.getPrice());
             }
             if(book.getPost() != null) {
                 return ResponseEntity.badRequest()
@@ -73,8 +70,8 @@ public class PostServiceImpl implements PostService {
                 return ResponseEntity.badRequest()
                         .body(new BaseResponseDTO(LocalDateTime.now(), HttpStatus.BAD_REQUEST, "Book already done"));
             }
+            bookRepository.save(book);
             books.add(book);
-
         }
 
         // set book to post
@@ -97,16 +94,36 @@ public class PostServiceImpl implements PostService {
     }
 
     @Override
-    public ResponseEntity<BaseResponseDTO> getUserPost(Principal principal) {
+    public ResponseEntity<BaseResponseDTO> getUserActivePost(Principal principal) {
         List<PostDTO> postDTOS = new ArrayList<>();
         User user = userRepository.findByFireBaseUid(principal.getName())
                 .orElseThrow(()->new ResourceNotFoundException("User Not Found"));
-        List<Post> posts = postRepository.findByCreateBy(user);
-        if(posts.isEmpty()) {
-            return ResponseEntity.ok(new BaseResponseDTO(LocalDateTime.now(), HttpStatus.OK, "Successfully", null,null));
-        }
+
+        PostStatus postStatus = postStatusRepository.findByName("ACTIVE")
+                .orElseThrow(()->new ResourceNotFoundException("Post status Not Found"));
+
+        List<Post> posts = postRepository.findByCreateByAndPostStatus(user, postStatus);
+
         for (Post post: posts
              ) {
+            PostDTO postDTO = convertToDTO(post);
+            postDTOS.add(postDTO);
+        }
+        return ResponseEntity.ok(new BaseResponseDTO(LocalDateTime.now(), HttpStatus.OK, "Successfully", null, postDTOS));
+    }
+    @Override
+    public ResponseEntity<BaseResponseDTO> getUserDeactivePost(Principal principal) {
+        List<PostDTO> postDTOS = new ArrayList<>();
+        User user = userRepository.findByFireBaseUid(principal.getName())
+                .orElseThrow(()->new ResourceNotFoundException("User Not Found"));
+
+        PostStatus postStatus = postStatusRepository.findByName("DEACTIVE")
+                .orElseThrow(()->new ResourceNotFoundException("Post status Not Found"));
+
+        List<Post> posts = postRepository.findByCreateByAndPostStatus(user, postStatus);
+
+        for (Post post: posts
+        ) {
             PostDTO postDTO = convertToDTO(post);
             postDTOS.add(postDTO);
         }
@@ -257,9 +274,10 @@ private boolean matchesFilter(Post post, FilterRequest filterRequest) {
 
         }
 
+        Set<Book> books = post.getBooks();
         if(postUpdateRequest.getExchangeMethod() != null &&
                 !ExchangeMethod.valueOf(postUpdateRequest.getExchangeMethod()).equals(post.getExchangeMethod())) {
-            Set<Book> books = post.getBooks();
+
             for (Book book: books
             ) {
                 if(postUpdateRequest.getExchangeMethod().equals("TRADE") || postUpdateRequest.getExchangeMethod().equals("GIVE") ) {
@@ -270,18 +288,26 @@ private boolean matchesFilter(Post post, FilterRequest filterRequest) {
                         post.setExchangeMethod(ExchangeMethod.GIVE);
                     }
                 } else {
-                    for (BigDecimal price: postUpdateRequest.getPrice()
-                    ) {
-                        for (UUID id: postUpdateRequest.getBookPriceId()
-                             ) {
-                            if(book == bookRepository.findById(id)
-                                    .orElseThrow(() -> new ResourceNotFoundException("Book with id:" + postUpdateRequest.getBookPriceId() + "Not Found!"))) {
-                                book.setPrice(price);
-
-                            }
+                    for (BookPriceDTO bookPriceDTO: postUpdateRequest.getBookPriceDTOS()) {
+                        if(book == bookRepository.findById(bookPriceDTO.getBookPriceId())
+                                .orElseThrow(() -> new ResourceNotFoundException("Book with id:" + bookPriceDTO.getBookPriceId() + "Not Found!"))) {
+                            book.setPrice(bookPriceDTO.getPrice());
                         }
                     }
                     post.setExchangeMethod(ExchangeMethod.SELL);
+                }
+                bookRepository.save(book);
+            }
+        }
+        //
+        if(post.getExchangeMethod().equals(ExchangeMethod.SELL)) {
+            for (Book book : books
+            ) {
+                for (BookPriceDTO bookPriceDTO : postUpdateRequest.getBookPriceDTOS()) {
+                    if (book == bookRepository.findById(bookPriceDTO.getBookPriceId())
+                            .orElseThrow(() -> new ResourceNotFoundException("Book with id:" + bookPriceDTO.getBookPriceId() + "Not Found!"))) {
+                        book.setPrice(bookPriceDTO.getPrice());
+                    }
                 }
                 bookRepository.save(book);
             }
@@ -360,14 +386,17 @@ private boolean matchesFilter(Post post, FilterRequest filterRequest) {
         return ResponseEntity.ok(new BaseResponseDTO(LocalDateTime.now(), HttpStatus.OK, "Delete Successfully"));
     }
 
+    @Override
     public PostDTO convertToDTO (Post post) {
         Set<BookDTO> bookDTOS = new HashSet<>();
         if(post == null) {
             return null;
         }
         PostDTO postDTO = modelMapper.map(post, PostDTO.class);
-        postDTO.setCreateBy(post.getCreateBy().getEmail());
+        User user = post.getCreateBy();
+        postDTO.setCreateBy(user.getEmail());
         postDTO.setUpdateBy(post.getUpdateBy());
+        postDTO.setUserGeneralDTO(convertToUserGeneralDTO(user));
         postDTO.setCity(post.getArea().getCity());
         postDTO.setDistrict(post.getDistrict().getDistrict());
         postDTO.setPostStatus(post.getPostStatus().getName());
@@ -378,5 +407,52 @@ private boolean matchesFilter(Post post, FilterRequest filterRequest) {
         }
         postDTO.setBookDTOS(bookDTOS);
         return postDTO;
+    }
+    @Override
+    public PostGeneralDTO convertToGeneralDTO(Post post) {
+        if(post == null) {
+            return null;
+        }
+        int sum=0;
+        PostGeneralDTO postGeneralDTO = modelMapper.map(post, PostGeneralDTO.class);
+        postGeneralDTO.setCity(post.getArea().getCity());
+        postGeneralDTO.setDistrict(post.getDistrict().getDistrict());
+        User user = post.getCreateBy();
+        String name = user.getLastName() + " " + user.getFirstName();
+        postGeneralDTO.setCreateBy(name);
+        Set<Book> books = post.getBooks();
+        List<String> categories = new ArrayList<>();
+        for (Book book: books
+             ) {
+            sum++;
+            String category = book.getMainCategory().getName();
+            categories.add(category);
+        }
+        postGeneralDTO.setNumOfBook(sum);
+        postGeneralDTO.setCategories(categories);
+
+        Optional<String> firstBookCoverImage = books.stream()
+                .map(Book::getCoverImage)
+                .findFirst();
+
+        String imgUrl = firstBookCoverImage.orElse(null);
+        postGeneralDTO.setImgUrl(imgUrl);
+        //postGeneralDTO.setImgUrl(null);
+
+        return postGeneralDTO;
+    }
+    public UserGeneralDTO convertToUserGeneralDTO (User user) {
+        if (user == null) {
+            return null;
+        }
+        UserGeneralDTO userGeneralDTO = new UserGeneralDTO();
+        int num = 0;
+        String name = user.getLastName() + " " + user.getFirstName();
+        userGeneralDTO.setId(user.getId());
+        userGeneralDTO.setPhone(user.getPhone());
+        userGeneralDTO.setName(name);
+        userGeneralDTO.setTotalRate(user.getTotalRate());
+        userGeneralDTO.setImgUrl(user.getImage());
+        return userGeneralDTO;
     }
 }

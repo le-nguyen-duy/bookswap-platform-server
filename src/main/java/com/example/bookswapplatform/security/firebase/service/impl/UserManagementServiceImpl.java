@@ -1,9 +1,11 @@
 package com.example.bookswapplatform.security.firebase.service.impl;
 
 import com.example.bookswapplatform.dto.BaseResponseDTO;
+import com.example.bookswapplatform.entity.Payment.UserWallet;
 import com.example.bookswapplatform.entity.User.User;
 import com.example.bookswapplatform.repository.RoleRepository;
 import com.example.bookswapplatform.repository.UserRepository;
+import com.example.bookswapplatform.repository.UserWalletRepository;
 import com.example.bookswapplatform.security.firebase.service.UserManagementService;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.auth.FirebaseAuthException;
@@ -14,6 +16,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.stereotype.Service;
 
+import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.util.*;
 import java.util.concurrent.atomic.AtomicInteger;
@@ -24,6 +27,7 @@ public class UserManagementServiceImpl implements UserManagementService {
     private final FirebaseAuth firebaseAuth;
     private final RoleRepository roleRepository;
     private final UserRepository userRepository;
+    private final UserWalletRepository userWalletRepository;
     @Override
     public ResponseEntity<BaseResponseDTO> setUserClaims(String uid) throws FirebaseAuthException {
         UserRecord userRecord = firebaseAuth.getUser(uid);
@@ -39,6 +43,12 @@ public class UserManagementServiceImpl implements UserManagementService {
             user.setEnable(true);
             user.setPhone(null);
             userRepository.save(user);
+            UserWallet userWallet = new UserWallet();
+            userWallet.setCreateBy(user);
+            userWallet.setBalance(BigDecimal.valueOf(200000));
+            userWalletRepository.save(userWallet);
+            //user.setUserWallet(userWallet);
+
             //set claims cho idToken
             Map<String, Object> claims = convertAuthoritiesToClaims(user.getAuthorities());
             firebaseAuth.setCustomUserClaims(uid, claims);

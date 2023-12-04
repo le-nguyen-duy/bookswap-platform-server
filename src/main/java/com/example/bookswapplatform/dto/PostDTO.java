@@ -26,11 +26,12 @@ public class PostDTO {
     private LocalDateTime createDate;
     @JsonFormat(shape = JsonFormat.Shape.STRING, pattern = DateTimeUtils.DATETIME_FORMAT)
     private LocalDateTime updateDate;
-    private String createBy;
-    private String updateBy;
     private String city;
     private String district;
     private String postStatus;
     private int views;
+    private String createBy;
+    private String updateBy;
+    private UserGeneralDTO userGeneralDTO;
     private Set<BookDTO> bookDTOS;
 }

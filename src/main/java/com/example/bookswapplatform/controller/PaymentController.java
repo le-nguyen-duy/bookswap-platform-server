@@ -11,23 +11,21 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 import java.security.Principal;
-import java.util.List;
 import java.util.UUID;
 
 @RestController
 @RequestMapping("api/v1/payment")
 @RequiredArgsConstructor
+@PreAuthorize("hasAuthority('ROLE_USER')")
 public class PaymentController {
     private final PaymentService paymentService;
     @PostMapping("/checkout-request")
-    @PreAuthorize("hasAuthority('BOOK:CREATE')")
-    public ResponseEntity<BaseResponseDTO> checkoutForUserRequest (@RequestParam UUID paymentId) {
-        return paymentService.checkoutForUserRequest(paymentId);
+    public ResponseEntity<BaseResponseDTO> checkoutForUserRequest (Principal principal, @RequestParam UUID paymentId) {
+        return paymentService.checkoutForUserRequest(principal, paymentId);
     }
 
     @PostMapping("/checkout-get-request")
-    @PreAuthorize("hasAuthority('BOOK:CREATE')")
-    public ResponseEntity<BaseResponseDTO> checkoutForUserGetRequest (@RequestParam UUID paymentId) {
-        return paymentService.checkoutForUserGetRequest(paymentId);
+    public ResponseEntity<BaseResponseDTO> checkoutForUserGetRequest (Principal principal, @RequestParam UUID paymentId) {
+        return paymentService.checkoutForUserGetRequest(principal, paymentId);
     }
 }

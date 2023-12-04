@@ -16,14 +16,11 @@ import java.util.UUID;
 public interface BookRepository extends JpaRepository<Book, UUID> {
     Optional<Book> findByTitle (String title);
     Optional<Book> findById (UUID id);
-    @Query("SELECT b from Book b where b.createBy = :user and b.isDone = false and b.post is null")
-//    @Filter(name = "notDeleted")
+    @Query("SELECT b from Book b where b.createBy = :user and b.isDone = false and b.post is null and b.isLock = false ")
     Page<Book> findBookAvailable (User user, Pageable pageable);
     @Query("SELECT b from Book b where b.createBy = :user and b.isDone = true")
-//    @Filter(name = "notDeleted")
     Page<Book> findBookIsDone (User user, Pageable pageable);
     @Query("SELECT b from Book b where b.createBy = :user and b.post is not null")
-//    @Filter(name = "notDeleted")
     Page<Book> findBookInPost (User user, Pageable pageable);
     @Query("SELECT b from Book b where b.createBy = :user and b.isDone = false and b.post is null")
     Set<Book> findByCreatedBy(User user);

@@ -1,15 +1,12 @@
 package com.example.bookswapplatform.service.impl;
 
 import com.example.bookswapplatform.common.Pagination;
-import com.example.bookswapplatform.dto.BaseResponseDTO;
-import com.example.bookswapplatform.dto.BookDTO;
-import com.example.bookswapplatform.dto.BookRequest;
-import com.example.bookswapplatform.dto.BookImageDTO;
+import com.example.bookswapplatform.dto.*;
+import com.example.bookswapplatform.service.BookService;
 import com.example.bookswapplatform.entity.Book.*;
 import com.example.bookswapplatform.entity.User.User;
 import com.example.bookswapplatform.exception.ResourceNotFoundException;
 import com.example.bookswapplatform.repository.*;
-import com.example.bookswapplatform.service.BookService;
 import com.example.bookswapplatform.utils.DateTimeUtils;
 import lombok.RequiredArgsConstructor;
 import org.modelmapper.Condition;
@@ -80,6 +77,21 @@ public class BookServiceImpl implements BookService {
         setSubCategoryAndSubSubCategory(book, bookRequest);
 
         bookRepository.save(book);
+        //Set<BookImage> bookImages = new HashSet<>();
+        if(bookRequest.getImageUrls().isEmpty()) {
+            book.setBookImages(null);
+        } else {
+            for (String url : bookRequest.getImageUrls()
+            ) {
+                BookImage bookImage = new BookImage();
+                bookImage.setImage(url);
+                bookImage.setBook(book);
+                bookImageRepository.save(bookImage);
+                //bookImages.add(bookImage);
+
+            }
+            //book.setBookImages(bookImages);
+        }
 
         return ResponseEntity.ok(new BaseResponseDTO(LocalDateTime.now(), HttpStatus.CREATED, "Create Successfully"));
 
@@ -284,6 +296,12 @@ public class BookServiceImpl implements BookService {
         return ResponseEntity.ok(new BaseResponseDTO(LocalDateTime.now(), HttpStatus.OK, "Delete Successfully"));
     }
 
+    @Override
+    public ResponseEntity<BaseResponseDTO> findById(UUID bookId) {
+        Book book = bookRepository.findById(bookId).orElseThrow(()->new ResourceNotFoundException("Book with id :"+bookId+" Not Found!"));
+        return ResponseEntity.ok(new BaseResponseDTO(LocalDateTime.now(), HttpStatus.OK, "Success",null,convertToDTO(book)));
+    }
+
     public BookDTO convertToDTO (Book book) {
         if (book == null) {
             return null;
@@ -325,7 +343,16 @@ public class BookServiceImpl implements BookService {
         } else {
             bookDTO.setSubSubCategory(book.getSubSubCategory());
         }
-
         return bookDTO;
+    }
+
+    public BookGeneralDTO convertToGeneralDTO (Book book) {
+        if (book == null) {
+            return null;
+        }
+        BookGeneralDTO bookGeneralDTO = modelMapper.map(book, BookGeneralDTO.class);
+        bookGeneralDTO.setCoverImg(book.getCoverImage());
+        bookGeneralDTO.setCreateBy(book.getCreateBy().getEmail());
+        return bookGeneralDTO;
     }
 }

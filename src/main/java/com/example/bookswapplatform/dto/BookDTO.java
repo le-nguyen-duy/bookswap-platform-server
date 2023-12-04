@@ -1,7 +1,5 @@
 package com.example.bookswapplatform.dto;
 
-import com.example.bookswapplatform.entity.Book.Author;
-import com.example.bookswapplatform.entity.Book.BookImage;
 import com.example.bookswapplatform.utils.DateTimeUtils;
 import com.fasterxml.jackson.annotation.JsonFormat;
 import lombok.AllArgsConstructor;
@@ -29,8 +27,10 @@ public class BookDTO {
     private String language;
     private int pageCount;
     private boolean isDone;
+    private boolean isLock;
     private Set<String> authors;
     private Set<String> image;
+    private String coverImage;
     private String mainCategory;
     private String subCategory;
     private String subSubCategory;

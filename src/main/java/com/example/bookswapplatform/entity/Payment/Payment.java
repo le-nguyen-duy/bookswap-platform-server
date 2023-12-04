@@ -32,6 +32,7 @@ public class Payment {
 
     private BigDecimal fee;
 
+    private String description;
     @CreatedDate
     @JsonFormat(shape = JsonFormat.Shape.STRING, pattern = DateTimeUtils.DATETIME_FORMAT)
     @DateTimeFormat(pattern = DateTimeUtils.DATETIME_FORMAT)
@@ -48,4 +49,5 @@ public class Payment {
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "order_id")
     private Orders orders;
+
 }

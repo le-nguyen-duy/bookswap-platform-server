@@ -4,6 +4,7 @@ import com.example.bookswapplatform.entity.Book.Book;
 import com.example.bookswapplatform.entity.Order.OrderDetail;
 import com.example.bookswapplatform.entity.Order.OrderStatus;
 import com.example.bookswapplatform.entity.Order.Orders;
+import com.example.bookswapplatform.entity.User.User;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
@@ -18,6 +19,9 @@ public interface OrderDetailRepository extends JpaRepository<OrderDetail, UUID> 
 
     @Query("SELECT od.book FROM OrderDetail od WHERE od.orders = :orders")
     List<Book> findBooksInOrder(@Param("orders") Orders orders);
+    List<OrderDetail> findByOrders(Orders orders);
+    @Query("SELECT od.book FROM OrderDetail od WHERE od.orders = :orders AND od.book.createBy = :user")
+    List<Book> findReceiveBooksInOrder(Orders orders, User user);
 
 
 }

@@ -13,7 +13,8 @@ import java.util.UUID;
 
 public interface PostService {
     ResponseEntity<BaseResponseDTO> createPost (Principal principal, PostRequest postRequest);
-    ResponseEntity<BaseResponseDTO> getUserPost (Principal principal);
+    ResponseEntity<BaseResponseDTO> getUserActivePost (Principal principal);
+    ResponseEntity<BaseResponseDTO> getUserDeactivePost(Principal principal);
     ResponseEntity<BaseResponseDTO> filterPost(int pageNumber,
                                                int pageSize,
                                                String sortBy,

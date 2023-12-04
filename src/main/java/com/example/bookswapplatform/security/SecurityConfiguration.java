@@ -19,34 +19,35 @@ import java.util.Collection;
 import java.util.Optional;
 import java.util.stream.Collectors;
 
+import static org.springframework.security.web.util.matcher.AntPathRequestMatcher.antMatcher;
+
 @Configuration
 @EnableWebSecurity
 @RequiredArgsConstructor
 @EnableMethodSecurity
 public class SecurityConfiguration {
     private final CustomAccessDeniedHandler accessDeniedHandler;
-    private static final String[] WHITE_LIST_URL = {"/api/v1/auth/**",
-            "/api/v1/guest/**",
-            "/v2/api-docs",
-            "/v3/api-docs",
-            "/v3/api-docs/**",
-            "/swagger-resources",
-            "/swagger-resources/**",
-            "/configuration/ui",
-            "/configuration/security",
-            "/swagger-ui/**",
-            "/webjars/**",
-            "/swagger-ui.html"};
 
     @Bean
     public SecurityFilterChain securityFilterChain(HttpSecurity http, HandlerMappingIntrospector introspector) throws Exception {
-        MvcRequestMatcher.Builder mvcMatcherBuilder = new MvcRequestMatcher.Builder(introspector).servletPath("/path");
+        MvcRequestMatcher.Builder mvcMatcherBuilder = new MvcRequestMatcher.Builder(introspector).servletPath("/spring-mvc");
         http
                 .csrf(AbstractHttpConfigurer::disable)
                 .authorizeHttpRequests(authorize -> authorize
-                        .requestMatchers(WHITE_LIST_URL).permitAll()
-                        .requestMatchers(mvcMatcherBuilder.pattern("/api/v1/user/**")).hasAnyAuthority("PROFILE:READ")
-                        .requestMatchers(mvcMatcherBuilder.pattern("/api/v1/book/**")).hasAnyAuthority("BOOK:READ","BOOK:CREATE","BOOK:MODIFY","BOOK:DELETE")
+                        .requestMatchers(
+                                antMatcher("/api/v1/guest/**"),
+                                antMatcher("/api/v1/post/filter"),
+                                antMatcher("/api/v1/post/id"),
+                                antMatcher("/swagger-ui/**"),
+                                antMatcher("/swagger-ui.html"),
+//                                antMatcher("/v2/api-docs/**"),
+                                antMatcher("/v3/api-docs/**"),
+//                                antMatcher("/swagger-resources"),
+//                                antMatcher("/swagger-resources/**"),
+                                antMatcher("/configuration/ui"),
+                                antMatcher("/configuration/security")).permitAll()
+                        .requestMatchers(mvcMatcherBuilder.pattern("/api/v1/user/**")).hasAnyAuthority("ROLE_USER")
+                        .requestMatchers(mvcMatcherBuilder.pattern("/api/v1/book/**")).hasAnyAuthority("ROLE_USER")
                         .anyRequest().authenticated()
                 )
                 .exceptionHandling(httpSecurityExceptionHandlingConfigurer -> httpSecurityExceptionHandlingConfigurer.accessDeniedHandler(accessDeniedHandler))
@@ -58,7 +59,7 @@ public class SecurityConfiguration {
         JwtAuthenticationConverter converter = new JwtAuthenticationConverter();
 
         converter.setJwtGrantedAuthoritiesConverter(jwt ->
-                Optional.ofNullable(jwt.getClaimAsStringList("authority"))
+                Optional.ofNullable(jwt.getClaimAsStringList("role"))
                         .stream()
                         .flatMap(Collection::stream)
                         .map(SimpleGrantedAuthority::new)

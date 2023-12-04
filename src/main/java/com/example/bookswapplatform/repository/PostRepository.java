@@ -1,6 +1,8 @@
 package com.example.bookswapplatform.repository;
 
+import com.example.bookswapplatform.entity.Order.Orders;
 import com.example.bookswapplatform.entity.Post.Post;
+import com.example.bookswapplatform.entity.Post.PostStatus;
 import com.example.bookswapplatform.entity.User.User;
 import org.hibernate.annotations.Filter;
 import org.springframework.data.domain.Page;
@@ -13,8 +15,8 @@ import java.util.List;
 import java.util.UUID;
 
 public interface PostRepository extends JpaRepository<Post, UUID> {
-    List<Post> findByCreateBy(User user);
-    @Query("SELECT p FROM Post p WHERE p.postStatus.name = 'ACTIVE' ")
+    List<Post> findByCreateByAndPostStatus(User user, PostStatus postStatus);
+    @Query("SELECT p FROM Post p JOIN p.createBy u WHERE p.postStatus.name = 'ACTIVE' AND u.role.name = 'USER'")
     Page<Post> findAllNotDeactive(Pageable pageable);
 
 //    @Query("SELECT DISTINCT p FROM Post p " +
@@ -59,5 +61,8 @@ public interface PostRepository extends JpaRepository<Post, UUID> {
                                   @Param("authors") String authors,
                                   @Param("exchangeMethod") String exchangeMethod,
                                   @Param("language") String language, Pageable pageable);
+
+    @Query("SELECT DISTINCT p FROM Post p JOIN p.ordersSet o WHERE o = :orders")
+    Post getPostByOrder(@Param("orders") Orders orders);
 
 }

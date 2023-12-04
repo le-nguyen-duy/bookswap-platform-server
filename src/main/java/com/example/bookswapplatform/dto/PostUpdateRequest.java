@@ -7,6 +7,7 @@ import lombok.NoArgsConstructor;
 import lombok.Setter;
 
 import java.math.BigDecimal;
+import java.util.List;
 import java.util.Set;
 import java.util.UUID;
 @Getter
@@ -21,8 +22,10 @@ public class PostUpdateRequest {
     private String exchangeMethod;
     private String city;
     private String district;
-    @Schema(description = "If exchange method is trade price is 0, if sell user can input price")
-    private Set<BigDecimal> price;
-    @Schema(description = "Id book that user add price")
-    private Set<UUID> bookPriceId;
+//    @Schema(description = "If exchange method is trade price is 0, if sell user can input price")
+//    private Set<BigDecimal> price;
+//    @Schema(description = "Id book that user add price")
+//    private Set<UUID> bookPriceId;
+
+    private List<BookPriceDTO> bookPriceDTOS;
 }

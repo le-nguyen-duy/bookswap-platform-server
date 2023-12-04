@@ -49,7 +49,9 @@ public class User implements UserDetails {
     @Pattern(regexp = "\\d+", message = "Phone number must contain only digits")
     private String phone;
 
-    private int idCard;
+    @Size(min = 12, max = 12, message = "Id card must be 12 digits")
+    @Pattern(regexp = "\\d+", message = "Id card must contain only digits")
+    private String idCard;
 
     @Column(unique = true)
     @Email
@@ -63,6 +65,8 @@ public class User implements UserDetails {
 
     @Enumerated(EnumType.STRING)
     private Gender gender;
+    private String city;
+    private String district;
 
     @Column(columnDefinition = "boolean")
     @ColumnDefault("true")
@@ -78,7 +82,6 @@ public class User implements UserDetails {
     @DateTimeFormat(pattern = DateTimeUtils.DATETIME_FORMAT)
     private LocalDateTime updateDate;
 
-    @LastModifiedBy
     private String updateBy;
 
     private String image;
@@ -91,7 +94,7 @@ public class User implements UserDetails {
     @ColumnDefault("0")
     private float totalRate;
 
-    @ManyToOne(fetch = FetchType.LAZY)
+    @ManyToOne(fetch = FetchType.EAGER)
     @JoinColumn(name = "role_id", referencedColumnName = "id")
     private Role role;
 
@@ -100,6 +103,9 @@ public class User implements UserDetails {
 
     @OneToMany(mappedBy = "user")
     private List<Rate> rates;
+
+    @OneToMany(mappedBy = "createBy")
+    private List<Rate> rateCreated;
 
     @OneToMany(mappedBy = "createBy")
     private List<Orders> ordersList;

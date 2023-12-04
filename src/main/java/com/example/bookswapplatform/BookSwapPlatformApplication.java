@@ -1,5 +1,7 @@
 package com.example.bookswapplatform;
 
+import jakarta.servlet.ServletContext;
+import jakarta.servlet.ServletException;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 import org.springframework.boot.builder.SpringApplicationBuilder;
