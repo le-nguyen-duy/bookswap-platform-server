@@ -1,15 +1,16 @@
 server:
   servlet:
     context-path: /bookswap
-    session:
-      timeout: 5400
   port: 9000
 
 spring:
   datasource:
-    url: jdbc:mysql://localhost:3308/book_swap
-    username: root
-    password: 1234
+#    url: jdbc:mysql://localhost:3308/book_swap
+#    username: root
+#    password: 1234
+    url: jdbc:mysql://${MYSQL_HOST:localhost}:${MYSQL_PORT:3308}/book_swap
+    username: ${MYSQL_USERNAME:root}
+    password: ${MYSQL_PASSWORD:1234}
     driver-class-name: com.mysql.cj.jdbc.Driver
   security:
       oauth2:
@@ -17,6 +18,9 @@ spring:
           jwt:
             jwk-set-uri: https://www.googleapis.com/service_accounts/v1/jwk/securetoken%40system.gserviceaccount.com
             issuer-uri: https://securetoken.google.com/bookswapplatform
+  mvc:
+    view:
+      prefix: forward:/nonexistent
 
   jpa:
     hibernate:
@@ -28,6 +32,8 @@ spring:
       hibernate:
         dialect: org.hibernate.dialect.MySQL8Dialect
         enable_lazy_load_no_trans=true:
+#  profiles:
+#    active: development
 #Swagger
 #http://localhost:9000/bookswap/swagger-ui/index.html
 springdoc:
@@ -36,12 +42,11 @@ springdoc:
     operations-sorter: method
     path: /swagger-ui.html
 
-  paths-to-exclude: /authorities/**, /books/**, /orderses/**, /profile/**, /roles/**, /users/**, /authors/**, /bookImages/**
-
-#application:
-#  security:
-#    jwt:
-#      secret-key: 404E635266556A586E3272357538782F413F4428472B4B6250645367566B5970
-#      expiration: 86400000 # a day
-#      refresh-token:
-#        expiration: 604800000 # 7 days
+  paths-to-exclude: /authorities/**, /books/**, /orderses/**, /profile/**,
+    /roles/**, /users/**, /authors/**, /bookImages/**, /mainCategories/**,
+    /postStatuses/**, /posts/**, /areas/**, /districts/**, /orderDetails/**, 
+    /payments/**, /transactions/**, /userWallets/**, /rates/**, /rateCards/**,
+    /savedPosts/**, /chatRooms/**, /messages/**, /cancelOrderHistories/**, /orderShippings/**, /systemLogs/**, /bookSystems/**, /notifications/**
+google:
+  api:
+    key: AIzaSyBJAbBCH2w3aHD_hjBhz03kUEurN0NBaMY

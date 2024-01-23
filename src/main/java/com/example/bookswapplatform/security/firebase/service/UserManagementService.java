@@ -1,10 +1,15 @@
 package com.example.bookswapplatform.security.firebase.service;
 
+import com.example.bookswapplatform.dto.BaseResponseDTO;
 import com.google.firebase.auth.FirebaseAuthException;
+import org.springframework.http.ResponseEntity;
 
+import java.security.Principal;
 import java.util.List;
 
 public interface UserManagementService {
-    void setUserClaims(String uid) throws FirebaseAuthException;
+    ResponseEntity<BaseResponseDTO> setUserClaims(String uid) throws FirebaseAuthException;
+
+    ResponseEntity<BaseResponseDTO> changeUserClaims(String firebaseId, String role) throws FirebaseAuthException;
 
 }

@@ -1,5 +1,6 @@
 package com.example.bookswapplatform.dto;
 
+import com.example.bookswapplatform.common.Pagination;
 import com.example.bookswapplatform.utils.DateTimeUtils;
 import com.fasterxml.jackson.annotation.JsonFormat;
 import lombok.*;
@@ -18,6 +19,7 @@ public class BaseResponseDTO {
     private LocalDateTime timestamp;
     private HttpStatus status;
     private String message;
+    private Pagination pagination;
     private Object data;
 
     public BaseResponseDTO(LocalDateTime timestamp, HttpStatus status, String message) {

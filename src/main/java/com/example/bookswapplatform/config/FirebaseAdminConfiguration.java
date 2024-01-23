@@ -7,15 +7,14 @@ import com.google.firebase.auth.FirebaseAuth;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 
-import java.io.FileInputStream;
 import java.io.IOException;
+import java.io.InputStream;
 
 @Configuration
 public class FirebaseAdminConfiguration {
     @Bean
     public FirebaseAuth firebaseAuth() throws IOException {
-        FileInputStream serviceAccount =
-                new FileInputStream("src/main/resources/bookswapplatform-firebase-adminsdk.json");
+        InputStream serviceAccount = getClass().getClassLoader().getResourceAsStream("bookswapplatform-firebase-adminsdk.json");
 
         FirebaseOptions options = new FirebaseOptions.Builder()
                 .setCredentials(GoogleCredentials.fromStream(serviceAccount))

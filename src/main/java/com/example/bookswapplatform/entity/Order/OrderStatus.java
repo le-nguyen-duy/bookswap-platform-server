@@ -1,5 +1,5 @@
 package com.example.bookswapplatform.entity.Order;
 
 public enum OrderStatus {
-    NOT_CONFIRM, CONFIRMED, ON_GOING, PREPARING, FINISH, CANCEL
+     NOT_PAY, WAITING_CONFIRM, WAITING_SHIPPER,PREPARING, HOLDING, ON_GOING, FINISH, CANCEL
 }

@@ -1,16 +1,18 @@
 package com.example.bookswapplatform.entity.Order;
 
-import com.example.bookswapplatform.entity.Book.Book;
+import com.example.bookswapplatform.entity.Area.Area;
+import com.example.bookswapplatform.entity.Area.District;
+import com.example.bookswapplatform.entity.Payment.Payment;
 import com.example.bookswapplatform.entity.Post.Post;
+import com.example.bookswapplatform.entity.User.Rate;
+import com.example.bookswapplatform.entity.User.User;
 import com.example.bookswapplatform.utils.DateTimeUtils;
 import com.fasterxml.jackson.annotation.JsonFormat;
 import jakarta.persistence.*;
 import lombok.*;
 import org.hibernate.annotations.ColumnDefault;
 import org.hibernate.annotations.UuidGenerator;
-import org.springframework.data.annotation.CreatedBy;
 import org.springframework.data.annotation.CreatedDate;
-import org.springframework.data.annotation.LastModifiedBy;
 import org.springframework.data.annotation.LastModifiedDate;
 import org.springframework.data.jpa.domain.support.AuditingEntityListener;
 import org.springframework.format.annotation.DateTimeFormat;
@@ -31,12 +33,35 @@ import java.util.UUID;
 public class Orders {
     @Id
     @UuidGenerator(style = UuidGenerator.Style.RANDOM)
-    @Column(name = "order_id")
     private UUID id;
 
-    private BigDecimal price;
+    private BigDecimal senderPrice;
+    private BigDecimal receiverPrice;
+    private BigDecimal bookPrice;
+    private BigDecimal senderShipPrice;
+    private BigDecimal receiverShipPrice;
+
+    @Builder.Default
+    @ColumnDefault("20000")
+    private BigDecimal shipPrice = BigDecimal.valueOf(20000);
+
+    @Builder.Default
+    @ColumnDefault("2000")
+    private BigDecimal fee = BigDecimal.valueOf(2000) ;
+    private String senderPercent;
+    private String receiverPercent;
 
     private String note;
+
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "area_id")
+    private Area area;
+
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "district_id")
+    private District district;
+
+    private String locationDetail;
 
     @Column(columnDefinition = "boolean")
     @ColumnDefault("false")
@@ -46,38 +71,50 @@ public class Orders {
     @ColumnDefault("false")
     private boolean isPayment;
 
-    @JsonFormat(shape = JsonFormat.Shape.STRING, pattern = DateTimeUtils.DATE_FORMAT)
-    @DateTimeFormat(pattern = DateTimeUtils.DATE_FORMAT)
-    private LocalDate starShipDate;
-
-    @JsonFormat(shape = JsonFormat.Shape.STRING, pattern = DateTimeUtils.DATE_FORMAT)
-    @DateTimeFormat(pattern = DateTimeUtils.DATE_FORMAT)
-    private LocalDate finishShipDate;
+    @Column(columnDefinition = "boolean")
+    @ColumnDefault("false")
+    private boolean isShipping;
 
     @CreatedDate
     @JsonFormat(shape = JsonFormat.Shape.STRING, pattern = DateTimeUtils.DATETIME_FORMAT)
     @DateTimeFormat(pattern = DateTimeUtils.DATETIME_FORMAT)
     private LocalDateTime createDate;
 
+    @JsonFormat(shape = JsonFormat.Shape.STRING, pattern = DateTimeUtils.DATETIME_FORMAT)
+    @DateTimeFormat(pattern = DateTimeUtils.DATETIME_FORMAT)
+    private LocalDateTime autoRejectTime;
+
     @LastModifiedDate
     @JsonFormat(shape = JsonFormat.Shape.STRING, pattern = DateTimeUtils.DATETIME_FORMAT)
     @DateTimeFormat(pattern = DateTimeUtils.DATETIME_FORMAT)
     private LocalDateTime updateDate;
 
-    @CreatedBy
-    private String createBy;
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "user_id")
+    private User createBy;
+    private String userCancel;
 
-    @LastModifiedBy
     private String updateBy;
 
     @Enumerated(EnumType.STRING)
     private OrderStatus orderStatus;
 
-    @OneToOne(cascade = CascadeType.ALL)
-    @JoinColumn(name = "post_id" , referencedColumnName = "id")
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "post_id")
     private Post post;
 
-    @ManyToMany
-    @JoinTable(name = "order_detail", joinColumns = @JoinColumn(name = "order_id"), inverseJoinColumns = @JoinColumn(name = "book_id"))
-    Set<Book> books;
+    @OneToMany(mappedBy = "orders", cascade = CascadeType.ALL)
+    private Set<OrderDetail> orderDetails;
+
+    @OneToMany(mappedBy = "orders" ,cascade = CascadeType.ALL)
+    private Set<Payment> payments;
+
+    @OneToMany(mappedBy = "orders",cascade = CascadeType.ALL)
+    private Set<Rate> rates;
+
+    @OneToOne(mappedBy = "orders", cascade = CascadeType.ALL)
+    private CancelOrderHistory cancellationHistory;
+
+    @OneToMany(mappedBy = "orders", cascade = CascadeType.ALL )
+    private Set<OrderShipping> shippingOrders;
 }

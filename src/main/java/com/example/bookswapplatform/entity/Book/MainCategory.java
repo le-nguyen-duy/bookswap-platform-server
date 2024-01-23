@@ -29,6 +29,13 @@ public class MainCategory {
     @OneToMany(mappedBy = "parentCategory")
     private Set<MainCategory> subCategories;
 
-    @OneToMany(mappedBy = "category")
+    @OneToMany(mappedBy = "parentCategory")
+    private Set<MainCategory> subSubCategories;
+
+    @OneToMany(mappedBy = "mainCategory")
     private Set<Book> books;
+
+    @OneToMany(mappedBy = "mainCategory")
+    private Set<BookSystem> bookSystems;
+
 }

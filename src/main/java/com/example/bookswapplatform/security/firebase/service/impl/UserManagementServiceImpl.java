@@ -1,16 +1,25 @@
 package com.example.bookswapplatform.security.firebase.service.impl;
 
+import com.example.bookswapplatform.dto.BaseResponseDTO;
+import com.example.bookswapplatform.entity.Payment.UserWallet;
 import com.example.bookswapplatform.entity.User.User;
+import com.example.bookswapplatform.exception.ResourceNotFoundException;
 import com.example.bookswapplatform.repository.RoleRepository;
 import com.example.bookswapplatform.repository.UserRepository;
+import com.example.bookswapplatform.repository.UserWalletRepository;
 import com.example.bookswapplatform.security.firebase.service.UserManagementService;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.auth.FirebaseAuthException;
 import com.google.firebase.auth.UserRecord;
 import lombok.RequiredArgsConstructor;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.stereotype.Service;
 
+import java.math.BigDecimal;
+import java.security.Principal;
+import java.time.LocalDateTime;
 import java.util.*;
 import java.util.concurrent.atomic.AtomicInteger;
 
@@ -20,8 +29,9 @@ public class UserManagementServiceImpl implements UserManagementService {
     private final FirebaseAuth firebaseAuth;
     private final RoleRepository roleRepository;
     private final UserRepository userRepository;
+    private final UserWalletRepository userWalletRepository;
     @Override
-    public void setUserClaims(String uid) throws FirebaseAuthException {
+    public ResponseEntity<BaseResponseDTO> setUserClaims(String uid) throws FirebaseAuthException {
         UserRecord userRecord = firebaseAuth.getUser(uid);
         //kiểm tra user đã tồn tại trong hệ thống chưa
         if(userRepository.findByEmail(userRecord.getEmail()).isEmpty()) {
@@ -33,14 +43,35 @@ public class UserManagementServiceImpl implements UserManagementService {
             user.setFireBaseUid(uid);
             user.setRole(roleRepository.findByName("USER"));
             user.setEnable(true);
+            user.setPhone(null);
             userRepository.save(user);
+            UserWallet userWallet = new UserWallet();
+            userWallet.setCreateBy(user);
+            userWallet.setBalance(BigDecimal.valueOf(0));
+            userWalletRepository.save(userWallet);
+            //user.setUserWallet(userWallet);
+
             //set claims cho idToken
             Map<String, Object> claims = convertAuthoritiesToClaims(user.getAuthorities());
             firebaseAuth.setCustomUserClaims(uid, claims);
         }
+        return ResponseEntity.ok(new BaseResponseDTO(LocalDateTime.now(), HttpStatus.CREATED, "Successfully"));
 
         //revoked idToken để client dùng refesh token tạo 1 idToken mới có chứa claims
 
+    }
+
+    @Override
+    public ResponseEntity<BaseResponseDTO> changeUserClaims(String firebaseId, String role) throws FirebaseAuthException {
+        //String uid = principal.getName();
+        UserRecord userRecord = firebaseAuth.getUser(firebaseId);
+        User user = userRepository.findByFireBaseUid(firebaseId)
+                .orElseThrow(() -> new ResourceNotFoundException("User not found!"));
+        user.setRole(roleRepository.findByName(role));
+        userRepository.save(user);
+        Map<String, Object> claims = convertAuthoritiesToClaims(user.getAuthorities());
+        firebaseAuth.setCustomUserClaims(firebaseId, claims);
+        return ResponseEntity.ok(new BaseResponseDTO(LocalDateTime.now(), HttpStatus.OK, "Successfully"));
     }
 
     //Chuyển danh sách authorities thành claims
