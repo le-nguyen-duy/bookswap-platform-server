@@ -11,5 +11,7 @@ public interface RateService {
     ResponseEntity<BaseResponseDTO> rateUser(Principal principal,UUID orderId, RateRequestDTO rateRequestDTO);
 
     ResponseEntity<BaseResponseDTO> viewRate(Principal principal);
+    ResponseEntity<BaseResponseDTO> viewRateByCreateBy(Principal principal);
     ResponseEntity<BaseResponseDTO> viewOtherUserRate(UUID userId);
+    ResponseEntity<BaseResponseDTO> viewOtherUserRateCreate(UUID userId);
 }

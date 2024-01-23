@@ -19,7 +19,7 @@ import java.util.UUID;
 @Setter
 @EntityListeners(AuditingEntityListener.class)
 @Builder
-public class BookSystem {
+public class  BookSystem {
     @Id
     @UuidGenerator(style = UuidGenerator.Style.RANDOM)
     private UUID id;
@@ -45,6 +45,7 @@ public class BookSystem {
     private String subCategory;
 
     private String subSubCategory;
+    private String coverImg;
 
     @ManyToMany(fetch = FetchType.LAZY)
     @JoinTable(name = "book_system_author", joinColumns = @JoinColumn(name = "book_system_id", referencedColumnName = "id"),

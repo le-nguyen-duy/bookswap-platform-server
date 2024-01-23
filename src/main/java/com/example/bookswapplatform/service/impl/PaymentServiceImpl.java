@@ -3,7 +3,11 @@ package com.example.bookswapplatform.service.impl;
 import com.example.bookswapplatform.common.ExchangeMethod;
 import com.example.bookswapplatform.dto.BaseResponseDTO;
 import com.example.bookswapplatform.dto.PaymentDTO;
+import com.example.bookswapplatform.entity.Payment.Transaction.TransactionType;
+import com.example.bookswapplatform.entity.Payment.Transaction.WalletType;
 import com.example.bookswapplatform.entity.Post.PostStatus;
+import com.example.bookswapplatform.entity.SystemLog.Action;
+import com.example.bookswapplatform.entity.SystemLog.Object;
 import com.example.bookswapplatform.entity.User.User;
 import com.example.bookswapplatform.service.PaymentService;
 import com.example.bookswapplatform.entity.Book.Book;
@@ -16,6 +20,7 @@ import com.example.bookswapplatform.entity.Payment.UserWallet;
 import com.example.bookswapplatform.entity.Post.Post;
 import com.example.bookswapplatform.exception.ResourceNotFoundException;
 import com.example.bookswapplatform.repository.*;
+import com.example.bookswapplatform.vnpay.config.Config;
 import lombok.RequiredArgsConstructor;
 import org.modelmapper.ModelMapper;
 import org.springframework.http.HttpStatus;
@@ -41,6 +46,7 @@ public class PaymentServiceImpl implements PaymentService {
     private final TransactionRepository transactionRepository;
     private final UserWalletRepository userWalletRepository;
     private final UserRepository userRepository;
+    private final SystemServiceImpl systemService;
     private final ModelMapper modelMapper;
 
     @Override
@@ -56,7 +62,12 @@ public class PaymentServiceImpl implements PaymentService {
                 .orElseThrow(() -> new ResourceNotFoundException("User not found!"));
 
         Orders orders = payment.getOrders();
+        if (orders.getPost() == null) {
+            return ResponseEntity.badRequest()
+                    .body(new BaseResponseDTO(LocalDateTime.now(), HttpStatus.BAD_REQUEST, "Post not found"));
+        }
         Post post = orders.getPost();
+        User poster = post.getCreateBy();
         boolean bookIsLock = orderDetailRepository.findReceiveBooksInOrder(orders, post.getCreateBy()).stream().allMatch(Book::isLock);
         if(bookIsLock) {
             return ResponseEntity.badRequest()
@@ -74,7 +85,7 @@ public class PaymentServiceImpl implements PaymentService {
         payment.setStatus(Status.SUCCESS);
 
         if(post.getExchangeMethod().equals(ExchangeMethod.SELL)) {
-            createTransaction(payment,post.getCreateBy());
+            createTransaction(payment,poster);
         }else {
             createTransaction(payment, null);
         }
@@ -83,7 +94,14 @@ public class PaymentServiceImpl implements PaymentService {
         orders.setOrderStatus(OrderStatus.WAITING_CONFIRM);
         //đổi trạng thái của book thành lock
 
-        post.getBooks().forEach(book -> book.setLock(true));
+        //post.getBooks().forEach(book -> book.setLock(true));
+        List<Book> books = orderDetailRepository.findBooksInOrder(orders);
+        for (Book book: books
+        ) {
+            book.setLock(true);
+            bookRepository.save(book);
+
+        }
         orderRepository.save(orders);
         //khi thanh toán đơn xong nếu trong post có tất cả sách đã lock thì đổi status của post thành locked
         PostStatus postStatus = postStatusRepository.findByName("LOCKED")
@@ -93,16 +111,19 @@ public class PaymentServiceImpl implements PaymentService {
         //tạo thanh toán cho bên bán để xác nhận đơn
         createPaymentForUserGetRequest(orders);
 
+        systemService.saveSystemLog(user, Object.PAYMENT, Action.CREATE);
         return ResponseEntity.ok(new BaseResponseDTO(LocalDateTime.now(), HttpStatus.OK, "Successfully"));
     }
     public void createPaymentForUserGetRequest(Orders orders) {
         if(!orders.isConfirm()) {
             Payment payment = new Payment();
             payment.setAmount(orders.getReceiverPrice());
-            payment.setFee(BigDecimal.valueOf(2000));
+            payment.setFee(orders.getFee());
             payment.setStatus(Status.ON_GOING);
             payment.setOrders(orders);
             payment.setCreateBy(orders.getPost().getCreateBy().getEmail());
+            payment.setDescription("Tiền phí BookSwap");
+
             paymentRepository.save(payment);
 
         }
@@ -112,7 +133,7 @@ public class PaymentServiceImpl implements PaymentService {
         if(orders.getOrderStatus().equals(OrderStatus.CANCEL)) {
             Payment payment = new Payment();
             payment.setAmount(orders.getSenderPrice());
-            payment.setFee(BigDecimal.valueOf(2000));
+            payment.setFee(orders.getFee());
             payment.setStatus(Status.SUCCESS);
             payment.setOrders(orders);
             payment.setCreateBy("Book Swap");
@@ -124,9 +145,37 @@ public class PaymentServiceImpl implements PaymentService {
             userWallet.setBalance(balance.add(senderPrice));
             paymentRepository.save(payment);
             createTransaction(payment, user);
+            createReceiveTransaction(payment, user);
         }
     }
 
+    public void createReceiveTransaction(Payment payment, User user) {
+        Transaction transaction = new Transaction();
+        //transaction.setToWallet(user.getUserWallet());
+        transaction.setAmount(payment.getAmount());
+        transaction.setFee(payment.getFee());
+        transaction.setStatus(String.valueOf(payment.getStatus()));
+        transaction.setWalletType(WalletType.BOOKSWAP);
+        transaction.setTransactionType(TransactionType.RECEIVE);
+        transaction.setCreateBy(user.getEmail());
+        transaction.setPayment(payment);
+        transaction.setDescription("Nhận tiền từ " + payment.getCreateBy());
+        transactionRepository.save(transaction);
+    }
+
+    public void createReceiveSellTransaction(Orders orders, User user) {
+        Transaction transaction = new Transaction();
+        //transaction.setToWallet(user.getUserWallet());
+        transaction.setAmount(orders.getBookPrice());
+        transaction.setFee(orders.getFee());
+        transaction.setStatus("SUCCESS");
+        transaction.setWalletType(WalletType.BOOKSWAP);
+        transaction.setTransactionType(TransactionType.RECEIVE);
+        transaction.setCreateBy(user.getEmail());
+        transaction.setPayment(null);
+        transaction.setDescription("Nhận tiền từ " + orders.getCreateBy().getEmail());
+        transactionRepository.save(transaction);
+    }
     public void createTransaction(Payment payment, User user) {
         Transaction transaction = new Transaction();
         if (user == null) {
@@ -139,6 +188,12 @@ public class PaymentServiceImpl implements PaymentService {
         transaction.setCreateBy(payment.getCreateBy());
         transaction.setStatus(String.valueOf(payment.getStatus()));
         transaction.setDescription(payment.getDescription());
+        transaction.setWalletType(WalletType.BOOKSWAP);
+        if(user == null) {
+            transaction.setTransactionType(TransactionType.FEE);
+        }else {
+            transaction.setTransactionType(TransactionType.SEND);
+        }
 
         transaction.setPayment(payment);
         transactionRepository.save(transaction);
@@ -153,6 +208,10 @@ public class PaymentServiceImpl implements PaymentService {
             return ResponseEntity.badRequest()
                     .body(new BaseResponseDTO(LocalDateTime.now(), HttpStatus.BAD_REQUEST, "Must be payment on-going"));
         }
+        if (payment.getOrders().getPost() == null) {
+            return ResponseEntity.badRequest()
+                    .body(new BaseResponseDTO(LocalDateTime.now(), HttpStatus.BAD_REQUEST, "Post not found"));
+        }
         User user = userRepository.findByFireBaseUid(principal.getName())
                 .orElseThrow(() -> new ResourceNotFoundException("User not found!"));
         Orders orders = payment.getOrders();
@@ -163,7 +222,7 @@ public class PaymentServiceImpl implements PaymentService {
                     .body(new BaseResponseDTO(LocalDateTime.now(), HttpStatus.BAD_REQUEST, "Not have enough balance"));
 
         }
-        BigDecimal newBalance = userWallet.getBalance().subtract(payment.getAmount()).add(orders.getBookPrice());
+        BigDecimal newBalance = userWallet.getBalance().subtract(payment.getAmount());
         userWallet.setBalance(newBalance);
         payment.setStatus(Status.SUCCESS);
 
@@ -184,6 +243,7 @@ public class PaymentServiceImpl implements PaymentService {
         } else {
             orders.setOrderStatus(OrderStatus.WAITING_SHIPPER);
 
+
         }
         orderRepository.save(orders);
 
@@ -198,7 +258,49 @@ public class PaymentServiceImpl implements PaymentService {
                     .orElseThrow(() -> new ResourceNotFoundException("Status not found!")));
             postRepository.save(post);
         }
+        systemService.saveSystemLog(user, Object.PAYMENT, Action.CREATE);
         return ResponseEntity.ok(new BaseResponseDTO(LocalDateTime.now(), HttpStatus.OK, "Successfully"));
+    }
+
+    @Override
+    public ResponseEntity<BaseResponseDTO> createPaymentForAddBalance(Principal principal, BigDecimal amount) {
+        User user = userRepository.findByFireBaseUid(principal.getName())
+                .orElseThrow(() -> new ResourceNotFoundException("User not found!"));
+        Payment payment = new Payment();
+        String vnPayCode = Config.getRandomNumber(8);
+        payment.setStatus(Status.ON_GOING);
+        payment.setAmount(amount);
+        payment.setCreateBy(user.getEmail());
+        payment.setFee(BigDecimal.valueOf(0));
+        payment.setOrders(null);
+        payment.setDescription("Nạp tiền vào ví");
+        payment.setVnPayCode(vnPayCode);
+        paymentRepository.save(payment);
+        return ResponseEntity.ok(new BaseResponseDTO(LocalDateTime.now(), HttpStatus.OK, "Successfully",null, vnPayCode));
+    }
+
+    @Override
+    public void addBalance(Payment payment) {
+        User user = userRepository.findByEmail(payment.getCreateBy())
+                .orElseThrow(() -> new ResourceNotFoundException("User not found!"));
+
+        Transaction transaction = new Transaction();
+        transaction.setToWallet(null);
+        transaction.setAmount(payment.getAmount());
+        transaction.setFee(payment.getFee());
+        transaction.setCreateBy(payment.getCreateBy());
+        transaction.setStatus(String.valueOf(payment.getStatus()));
+        transaction.setDescription(payment.getDescription());
+        transaction.setWalletType(WalletType.VNPAY);
+        transaction.setTransactionType(TransactionType.ADD);
+        transaction.setPayment(payment);
+
+        transactionRepository.save(transaction);
+        UserWallet userWallet = user.getUserWallet();
+        BigDecimal balance = userWallet.getBalance();
+        userWallet.setBalance(balance.add(payment.getAmount()));
+        userWalletRepository.save(userWallet);
+
     }
 
     public PaymentDTO convertToDTO (Payment payment) {

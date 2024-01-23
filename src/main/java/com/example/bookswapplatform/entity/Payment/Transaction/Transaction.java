@@ -45,6 +45,12 @@ public class Transaction {
 
     private String status;
 
+    @Enumerated(EnumType.STRING)
+    private WalletType walletType;
+
+    @Enumerated(EnumType.STRING)
+    private TransactionType transactionType;
+
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "payment_id", referencedColumnName = "id")
     private Payment payment;

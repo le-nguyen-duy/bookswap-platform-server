@@ -5,18 +5,15 @@ import com.example.bookswapplatform.dto.RateDTO;
 import com.example.bookswapplatform.dto.RateRequestDTO;
 import com.example.bookswapplatform.entity.Order.Orders;
 import com.example.bookswapplatform.entity.User.Rate;
-import com.example.bookswapplatform.entity.User.RateCard;
 import com.example.bookswapplatform.entity.User.User;
 import com.example.bookswapplatform.exception.ResourceNotFoundException;
 import com.example.bookswapplatform.repository.OrderRepository;
-import com.example.bookswapplatform.repository.RateCardRepository;
 import com.example.bookswapplatform.repository.RateRepository;
 import com.example.bookswapplatform.repository.UserRepository;
 import com.example.bookswapplatform.service.PostServiceHelper;
 import com.example.bookswapplatform.service.RateService;
 import lombok.RequiredArgsConstructor;
 import org.modelmapper.ModelMapper;
-import org.springframework.data.domain.Sort;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
@@ -32,18 +29,16 @@ public class RateServiceImpl implements RateService {
     private final RateRepository rateRepository;
     private final PostServiceHelper postServiceHelper;
     private final OrderRepository orderRepository;
-    private final RateCardRepository rateCardRepository;
     private final ModelMapper modelMapper;
+
     @Override
     public ResponseEntity<BaseResponseDTO> rateUser(Principal principal, UUID orderId, RateRequestDTO rateRequestDTO) {
-//        User user = userRepository.findById(userId)
-//                .orElseThrow(() -> new ResourceNotFoundException("User not found!"));
 
         Orders orders = orderRepository.findById(orderId).orElseThrow(() -> new ResourceNotFoundException("Order not found!"));
         User userRate = userRepository.findByFireBaseUid(principal.getName())
                 .orElseThrow(() -> new ResourceNotFoundException("User not found!"));
         User userGetRate = orders.getCreateBy();
-        if(userRate.getId().equals(userGetRate.getId())) {
+        if (userRate.getId().equals(userGetRate.getId())) {
             userGetRate = orders.getPost().getCreateBy();
         } else {
             userGetRate = orders.getCreateBy();
@@ -51,24 +46,12 @@ public class RateServiceImpl implements RateService {
 
         Rate rate = new Rate();
         rate.setRateNumber(rateRequestDTO.getRateNumber());
-        if(rateRequestDTO.getDescription() == null) {
+        if (rateRequestDTO.getDescription() == null) {
             rate.setDescription(null);
-        }else {
+        } else {
             rate.setDescription(rateRequestDTO.getDescription());
         }
 
-        Set<RateCard> rateCards = new HashSet<>();
-        if(rateRequestDTO.getRateCardIds().isEmpty()) {
-            rate.setRateCards(null);
-        } else {
-            for (UUID rateCardId : rateRequestDTO.getRateCardIds()
-            ) {
-                RateCard rateCard = new RateCard();
-                rateCard = rateCardRepository.findById(rateCardId).orElseThrow(() -> new ResourceNotFoundException("Rate card not found!"));
-                rateCards.add(rateCard);
-            }
-            rate.setRateCards(rateCards);
-        }
         rate.setCreateBy(userRate);
         rate.setUser(userGetRate);
 
@@ -79,6 +62,7 @@ public class RateServiceImpl implements RateService {
         userRepository.save(userGetRate);
         return ResponseEntity.ok(new BaseResponseDTO(LocalDateTime.now(), HttpStatus.OK, "Success"));
     }
+
     public float calculateTotalRate(User user) {
         float totalRate = 0;
         int sum = 0;
@@ -102,14 +86,30 @@ public class RateServiceImpl implements RateService {
                 .orElseThrow(() -> new ResourceNotFoundException("User not found!"));
         List<Rate> rates = rateRepository.findAllByUser(user);
         List<RateDTO> rateDTOS = new ArrayList<>();
-        for (Rate rate: rates
-             ) {
+        for (Rate rate : rates
+        ) {
             RateDTO rateDTO = convertToDTO(rate);
             rateDTOS.add(rateDTO);
         }
 
-        return ResponseEntity.ok(new BaseResponseDTO(LocalDateTime.now(), HttpStatus.OK, "Success",null, rateDTOS));
+        return ResponseEntity.ok(new BaseResponseDTO(LocalDateTime.now(), HttpStatus.OK, "Success", null, rateDTOS));
     }
+
+    @Override
+    public ResponseEntity<BaseResponseDTO> viewRateByCreateBy(Principal principal) {
+        User user = userRepository.findByFireBaseUid(principal.getName())
+                .orElseThrow(() -> new ResourceNotFoundException("User not found!"));
+        List<Rate> rates = rateRepository.findAllByCreateBy(user);
+        List<RateDTO> rateDTOS = new ArrayList<>();
+        for (Rate rate : rates
+        ) {
+            RateDTO rateDTO = convertToDTO(rate);
+            rateDTOS.add(rateDTO);
+        }
+
+        return ResponseEntity.ok(new BaseResponseDTO(LocalDateTime.now(), HttpStatus.OK, "Success", null, rateDTOS));
+    }
+
 
     @Override
     public ResponseEntity<BaseResponseDTO> viewOtherUserRate(UUID userId) {
@@ -117,15 +117,30 @@ public class RateServiceImpl implements RateService {
                 .orElseThrow(() -> new ResourceNotFoundException("User not found!"));
         List<Rate> rates = rateRepository.findAllByUser(user);
         List<RateDTO> rateDTOS = new ArrayList<>();
-        for (Rate rate: rates
+        for (Rate rate : rates
         ) {
             RateDTO rateDTO = convertToDTO(rate);
             rateDTOS.add(rateDTO);
         }
-        return ResponseEntity.ok(new BaseResponseDTO(LocalDateTime.now(), HttpStatus.OK, "Success",null, rateDTOS));
+        return ResponseEntity.ok(new BaseResponseDTO(LocalDateTime.now(), HttpStatus.OK, "Success", null, rateDTOS));
     }
-    public RateDTO convertToDTO (Rate rate) {
-        if(rate == null) {
+
+    @Override
+    public ResponseEntity<BaseResponseDTO> viewOtherUserRateCreate(UUID userId) {
+        User user = userRepository.findById(userId)
+                .orElseThrow(() -> new ResourceNotFoundException("User not found!"));
+        List<Rate> rates = rateRepository.findAllByCreateBy(user);
+        List<RateDTO> rateDTOS = new ArrayList<>();
+        for (Rate rate : rates
+        ) {
+            RateDTO rateDTO = convertToDTO(rate);
+            rateDTOS.add(rateDTO);
+        }
+        return ResponseEntity.ok(new BaseResponseDTO(LocalDateTime.now(), HttpStatus.OK, "Success", null, rateDTOS));
+    }
+
+    public RateDTO convertToDTO(Rate rate) {
+        if (rate == null) {
             return null;
         }
         RateDTO rateDTO = modelMapper.map(rate, RateDTO.class);
@@ -135,7 +150,7 @@ public class RateServiceImpl implements RateService {
         rateDTO.setName(name);
         rateDTO.setImgUrl(user.getImage());
         Orders orders = rate.getOrders();
-        if(orders == null) {
+        if (orders == null) {
             rateDTO.setPostGeneralDTO(null);
         } else {
             rateDTO.setPostGeneralDTO(postServiceHelper.convertToGeneralDTO(orders.getPost()));

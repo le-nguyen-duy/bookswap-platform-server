@@ -15,6 +15,7 @@ public interface PostService {
     ResponseEntity<BaseResponseDTO> createPost (Principal principal, PostRequest postRequest);
     ResponseEntity<BaseResponseDTO> getUserActivePost (Principal principal);
     ResponseEntity<BaseResponseDTO> getUserDeactivePost(Principal principal);
+    ResponseEntity<BaseResponseDTO> getUserLockedPost(Principal principal);
     ResponseEntity<BaseResponseDTO> filterPost(int pageNumber,
                                                int pageSize,
                                                String sortBy,
@@ -24,5 +25,5 @@ public interface PostService {
     ResponseEntity<BaseResponseDTO> getPostDetail(UUID id);
     ResponseEntity<BaseResponseDTO> modifyPost (Principal principal, UUID postId, PostUpdateRequest postUpdateRequest);
     ResponseEntity<BaseResponseDTO> modifyBookInPost(Principal principal, UUID postId, PostUpdateBookRequest postUpdateBookRequest);
-    ResponseEntity<BaseResponseDTO> deletePost (UUID postId);
+    ResponseEntity<BaseResponseDTO> deletePost (Principal principal, UUID postId);
 }

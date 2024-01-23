@@ -16,11 +16,13 @@ import java.util.UUID;
 @AllArgsConstructor
 @NoArgsConstructor
 public class UserInfoDTO {
+    private UUID id;
     private String lastName;
     private String firstName;
     private String phoneNum;
     private String email;
     private String image;
+    private String fireBaseId;
     private float totalRate;
     private int numOfRate;
     private int numOfPost;

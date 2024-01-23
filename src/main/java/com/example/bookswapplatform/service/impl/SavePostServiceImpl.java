@@ -54,7 +54,7 @@ public class SavePostServiceImpl implements SavePostService {
         } else {
             for (SavedPost savePost: savedPosts
                  ) {
-                Post post = postRepository.findById(savePost.getPostId()).orElseThrow(() -> new ResourceNotFoundException("Post not found!"));
+                Post post = postRepository.findIncludeDeletedPost(savePost.getPostId()).orElseThrow(() -> new ResourceNotFoundException("Post not found!"));
                 postGeneralDTOs.add(postServiceHelper.convertToGeneralDTO(post));
 
             }

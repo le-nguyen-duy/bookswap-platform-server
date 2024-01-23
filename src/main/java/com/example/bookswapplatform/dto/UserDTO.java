@@ -10,17 +10,20 @@ import org.springframework.format.annotation.DateTimeFormat;
 
 import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.util.UUID;
 
 @Getter
 @Setter
 @AllArgsConstructor
 @NoArgsConstructor
 public class UserDTO {
+    private UUID id;
     private String lastName;
     private String firstName;
     private String phoneNum;
     private String idCard;
     private String email;
+    private String fireBaseId;
     @JsonFormat(shape = JsonFormat.Shape.STRING, pattern = DateTimeUtils.DATE_FORMAT)
     @DateTimeFormat(pattern = DateTimeUtils.DATE_FORMAT)
     private LocalDate dateOfBirth;
@@ -28,5 +31,6 @@ public class UserDTO {
     private String image;
     private float totalRate;
     private int numOfRate;
+    private String role;
     private UserWalletDTO userWalletDTO;
 }

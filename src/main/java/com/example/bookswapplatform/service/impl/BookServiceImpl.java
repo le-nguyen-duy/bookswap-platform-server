@@ -1,7 +1,10 @@
 package com.example.bookswapplatform.service.impl;
 
+import com.example.bookswapplatform.common.PageableRequest;
 import com.example.bookswapplatform.common.Pagination;
 import com.example.bookswapplatform.dto.*;
+import com.example.bookswapplatform.entity.SystemLog.Action;
+import com.example.bookswapplatform.entity.SystemLog.Object;
 import com.example.bookswapplatform.service.BookService;
 import com.example.bookswapplatform.entity.Book.*;
 import com.example.bookswapplatform.entity.User.User;
@@ -12,6 +15,7 @@ import lombok.RequiredArgsConstructor;
 import org.modelmapper.Condition;
 import org.modelmapper.ModelMapper;
 import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.http.HttpStatus;
@@ -34,6 +38,7 @@ public class BookServiceImpl implements BookService {
     private final BookImageRepository bookImageRepository;
     private final CategoryRepository categoryRepository;
     private final UserRepository userRepository;
+    private final SystemServiceImpl systemService;
 
     @Override
     public ResponseEntity<BaseResponseDTO> createBook(String uid, BookRequest bookRequest)  {
@@ -64,12 +69,7 @@ public class BookServiceImpl implements BookService {
             authors.add(author);
         }
         book.setAuthors(authors);
-        try {
-            book.setPublishedDate(DateTimeUtils.convertStringToLocalDate(bookRequest.getPublishDate()));
-        } catch (ParseException e) {
-            return ResponseEntity.badRequest()
-                    .body(new BaseResponseDTO(LocalDateTime.now(), HttpStatus.BAD_REQUEST, e.getLocalizedMessage()));
-        }
+        book.setYear(bookRequest.getYear());
         // set category cho sách
         MainCategory mainCategory = categoryRepository.findByName(bookRequest.getCategory())
                 .orElseThrow(()->new ResourceNotFoundException("Main category:"+bookRequest.getCategory()+" Not Found!"));
@@ -93,6 +93,7 @@ public class BookServiceImpl implements BookService {
             //book.setBookImages(bookImages);
         }
 
+        systemService.saveSystemLog(user, Object.BOOK, Action.CREATE);
         return ResponseEntity.ok(new BaseResponseDTO(LocalDateTime.now(), HttpStatus.CREATED, "Create Successfully"));
 
     }
@@ -227,8 +228,9 @@ public class BookServiceImpl implements BookService {
                     mapper.when(skipNullAndSameValue).map(BookRequest::getIsbn, Book::setIsbn);
                     mapper.when(skipNullAndSameValue).map(BookRequest::getLanguage, Book::setLanguage);
                     mapper.when(skipNullAndSameValue).map(BookRequest::getNewPercent, Book::setNewPercent);
+                    mapper.when(skipNullAndSameValue).map(BookRequest::getYear, Book::setYear);
+                    mapper.when(skipNullAndSameValue).map(BookRequest::getCoverImage, Book::setCoverImage);
                     mapper.skip(Book::setAuthors);
-                    mapper.skip(Book::setPublishedDate);
                     mapper.skip(Book::setMainCategory);
                     mapper.skip(Book::setSubCategory);
                     mapper.skip(Book::setSubSubCategory);
@@ -237,15 +239,26 @@ public class BookServiceImpl implements BookService {
         modelMapper.map(bookRequest, book);
         book.setUpdateBy(user.getEmail());
 
-        try {
-            if(bookRequest.getPublishDate() != null &&
-                    !DateTimeUtils.convertStringToLocalDate(bookRequest.getPublishDate()).equals(book.getPublishedDate())) {
-                book.setPublishedDate(DateTimeUtils.convertStringToLocalDate(bookRequest.getPublishDate()));
-            }
-        } catch (ParseException e) {
-            throw new RuntimeException(e);
-        }
-
+//        if (bookRequest.getImageUrls() != null) {
+//            Set<UUID> deletedImageIds = new HashSet<>();
+//
+//            // Delete existing BookImages and store their IDs
+//            book.getBookImages().forEach(bookImage -> {
+//                deletedImageIds.add(bookImage.getId());
+//                bookImageRepository.deleteById(bookImage.getId());
+//            });
+//
+//            // Add new BookImages
+//            for (String requestImage : bookRequest.getImageUrls()) {
+//                BookImage bookImage = new BookImage();
+//                bookImage.setImage(requestImage);
+//                bookImage.setBook(book);
+//                bookImageRepository.save(bookImage);
+//            }
+//
+//            // Remove deleted BookImages from the set of new BookImages
+//            bookRequest.getImageUrls().removeIf(imageId -> deletedImageIds.contains(UUID.fromString(imageId)));
+//        }
         if(bookRequest.getAuthors() != null) {
             Set<Author> authors = new HashSet<>();
             for (String authorName : bookRequest.getAuthors()
@@ -279,11 +292,14 @@ public class BookServiceImpl implements BookService {
             book.setPageCount(bookRequest.getPageCount());
         }
         bookRepository.save(book);
+        systemService.saveSystemLog(user, Object.BOOK, Action.UPDATE);
         return ResponseEntity.ok(new BaseResponseDTO(LocalDateTime.now(), HttpStatus.OK, "Modify Successfully"));
     }
 
     @Override
-    public ResponseEntity<BaseResponseDTO> deleteBook(UUID bookId) {
+    public ResponseEntity<BaseResponseDTO> deleteBook(Principal principal, UUID bookId) {
+        User user = userRepository.findByFireBaseUid(principal.getName())
+                .orElseThrow(()->new ResourceNotFoundException("User Not Found"));
         Book book = bookRepository.findById(bookId).orElseThrow(()->new ResourceNotFoundException("Book with id :"+bookId+" Not Found!"));
         if(book.getPost() != null) {
             return ResponseEntity.badRequest()
@@ -293,6 +309,7 @@ public class BookServiceImpl implements BookService {
             bookRepository.save(book);
         }
 
+        systemService.saveSystemLog(user, Object.BOOK, Action.DELETE);
         return ResponseEntity.ok(new BaseResponseDTO(LocalDateTime.now(), HttpStatus.OK, "Delete Successfully"));
     }
 
@@ -300,6 +317,96 @@ public class BookServiceImpl implements BookService {
     public ResponseEntity<BaseResponseDTO> findById(UUID bookId) {
         Book book = bookRepository.findById(bookId).orElseThrow(()->new ResourceNotFoundException("Book with id :"+bookId+" Not Found!"));
         return ResponseEntity.ok(new BaseResponseDTO(LocalDateTime.now(), HttpStatus.OK, "Success",null,convertToDTO(book)));
+    }
+
+    @Override
+    public ResponseEntity<BaseResponseDTO> filterBook(int pageNumber,
+                                                      int pageSize,
+                                                      String sortBy,
+                                                      String sortOrder,
+                                                      String keyWord,
+                                                      BookFilterRequest bookFilterRequest) {
+        //int normalizedPageNumber = Math.max(0, pageNumber);
+        PageableRequest pageableRequest = new PageableRequest(pageNumber, pageSize, sortBy, sortOrder);
+        Pageable pageable = pageableRequest.toPageable();
+        Page<Book> bookPage = null;
+        List<Book> books;
+        List<BookDTO> bookDTOS = null;
+
+        if ((keyWord == null || keyWord.isEmpty()) && bookFilterRequest == null) {
+            // Trường hợp không có keyWord, lọc trên toàn bộ danh sách và sau đó phân trang
+            bookPage = bookRepository.findAll(pageable);
+            books = bookPage.getContent();
+            bookDTOS = books.stream().map(this::convertToDTO).toList();
+        }
+        if (keyWord != null && bookFilterRequest == null ) {
+            switch (keyWord) {
+                case "AVAILABLE" -> {
+                    bookPage = bookRepository.findAllBookAvailable(pageable);
+                    books = bookPage.getContent();
+                }
+                case "ISDONE" -> {
+                    bookPage = bookRepository.findAllBookIsDone(pageable);
+                    books = bookPage.getContent();
+                }
+                case "INPOST" -> {
+                    bookPage = bookRepository.findAllBookInPost(pageable);
+                    books = bookPage.getContent();
+                }
+                default -> {
+                    // Trường hợp có keyWord, thực hiện truy vấn thông thường
+                    bookPage = bookRepository.searchBookByKeyWord(keyWord, pageable);
+                    books = bookPage.getContent();
+                }
+            }
+            bookDTOS = books.stream().map(this::convertToDTO).toList();
+        }
+
+        if(bookFilterRequest != null && keyWord == null) {
+            books = bookRepository.findAll();
+            bookPage = new PageImpl<>(books, pageable, books.size());
+            bookDTOS = books.stream()
+                    .filter(book -> matchesFilter(book, bookFilterRequest))
+                    .map(this::convertToDTO)
+                    .toList();
+        }
+        if(bookFilterRequest != null && keyWord != null) {
+            switch (keyWord) {
+                case "AVAILABLE" -> {
+                    bookPage = bookRepository.findAllBookAvailable(pageable);
+                    books = bookPage.getContent();
+                }
+                case "ISDONE" -> {
+                    bookPage = bookRepository.findAllBookIsDone(pageable);
+                    books = bookPage.getContent();
+                }
+                case "INPOST" -> {
+                    bookPage = bookRepository.findAllBookInPost(pageable);
+                    books = bookPage.getContent();
+                }
+                default -> {
+                    // Trường hợp có keyWord, thực hiện truy vấn thông thường
+                    bookPage = bookRepository.searchBookByKeyWord(keyWord, pageable);
+                    books = bookPage.getContent();
+                }
+            }
+            bookDTOS = books.stream()
+                    .filter(book -> matchesFilter(book, bookFilterRequest))
+                    .map(this::convertToDTO)
+                    .toList();
+        }
+        
+        Pagination pagination = new Pagination(bookPage.getNumber(), bookPage.getTotalElements(), bookPage.getTotalPages());
+        return ResponseEntity.ok(new BaseResponseDTO(LocalDateTime.now(), HttpStatus.OK, "Success", pagination, bookDTOS));
+    }
+
+
+
+    private boolean matchesFilter(Book book, BookFilterRequest bookFilterRequest) {
+        return (bookFilterRequest.getLanguage() == null || book.getLanguage().equals(BookLanguage.valueOf(bookFilterRequest.getLanguage()))) &&
+                (bookFilterRequest.getMainCategory() == null || book.getMainCategory().getName().equals(bookFilterRequest.getMainCategory())) &&
+                (bookFilterRequest.getSubSubCategory() == null || Objects.equals(book.getSubCategory(), bookFilterRequest.getSubCategory())) &&
+                (bookFilterRequest.getSubCategory() == null || Objects.equals(book.getSubCategory(), bookFilterRequest.getSubCategory()));
     }
 
     public BookDTO convertToDTO (Book book) {
@@ -353,6 +460,7 @@ public class BookServiceImpl implements BookService {
         BookGeneralDTO bookGeneralDTO = modelMapper.map(book, BookGeneralDTO.class);
         bookGeneralDTO.setCoverImg(book.getCoverImage());
         bookGeneralDTO.setCreateBy(book.getCreateBy().getEmail());
+        bookGeneralDTO.setCategory(book.getMainCategory().getName());
         return bookGeneralDTO;
     }
 }

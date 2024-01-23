@@ -17,7 +17,6 @@ spring:
         resource-server:
           jwt:
             jwk-set-uri: https://www.googleapis.com/service_accounts/v1/jwk/securetoken%40system.gserviceaccount.com
-#            jwk-set-uri: https://www.googleapis.com/oauth2/v3/certs
             issuer-uri: https://securetoken.google.com/bookswapplatform
   mvc:
     view:
@@ -46,12 +45,8 @@ springdoc:
   paths-to-exclude: /authorities/**, /books/**, /orderses/**, /profile/**,
     /roles/**, /users/**, /authors/**, /bookImages/**, /mainCategories/**,
     /postStatuses/**, /posts/**, /areas/**, /districts/**, /orderDetails/**, 
-    /payments/**, /transactions/**, /userWallets/**, /rates/**, /rateCards/**, /savedPosts/**
-
-#application:
-#  security:
-#    jwt:
-#      secret-key: 404E635266556A586E3272357538782F413F4428472B4B6250645367566B5970
-#      expiration: 86400000 # a day
-#      refresh-token:
-#        expiration: 604800000 # 7 days
+    /payments/**, /transactions/**, /userWallets/**, /rates/**, /rateCards/**,
+    /savedPosts/**, /chatRooms/**, /messages/**, /cancelOrderHistories/**, /orderShippings/**, /systemLogs/**, /bookSystems/**, /notifications/**
+google:
+  api:
+    key: AIzaSyBJAbBCH2w3aHD_hjBhz03kUEurN0NBaMY

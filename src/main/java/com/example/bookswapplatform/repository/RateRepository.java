@@ -10,4 +10,5 @@ import java.util.UUID;
 
 public interface RateRepository extends JpaRepository<Rate, UUID> {
     List<Rate> findAllByUser (User user);
+    List<Rate> findAllByCreateBy (User user);
 }

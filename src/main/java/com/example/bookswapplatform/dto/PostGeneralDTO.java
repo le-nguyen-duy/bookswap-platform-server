@@ -6,6 +6,7 @@ import lombok.NoArgsConstructor;
 import lombok.Setter;
 
 import java.util.List;
+import java.util.Set;
 import java.util.UUID;
 
 @Getter
@@ -18,8 +19,11 @@ public class PostGeneralDTO {
     private String exchangeMethod;
     private String city;
     private String district;
+    private String locationDetail;
     private int numOfBook;
     private String imgUrl;
     private List<String> categories;
     private String createBy;
+    //private Set<String> postCategories;
+    private boolean deleted;
 }

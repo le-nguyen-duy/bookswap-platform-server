@@ -18,4 +18,6 @@ public class UserOrderDTO {
     private String email;
     private String city;
     private String district;
+    private String fireBaseId;
+    private String imgUrl;
 }

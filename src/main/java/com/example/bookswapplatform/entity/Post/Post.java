@@ -76,9 +76,12 @@ public class Post {
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "district_id")
     private District district;
+    private String locationDetail;
 
     @OneToMany(mappedBy = "post", cascade = CascadeType.ALL)
     private Set<Orders> ordersSet;
+
+    private Set<String> categories;
 
     private boolean deleted = Boolean.FALSE;
 

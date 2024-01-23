@@ -185,4 +185,11 @@ public class GlobalExceptionHandler extends ResponseEntityExceptionHandler {
         final ApiError apiError = new ApiError(HttpStatus.BAD_REQUEST, ex.getLocalizedMessage(), "error occurred");
         return new ResponseEntity<Object>(apiError, new HttpHeaders(), apiError.getStatus());
     }
+    @ExceptionHandler(CancelException.class)
+    public ResponseEntity<Object> handleCancelOrderException (CancelException ex) {
+        List<String> errs = new ArrayList<String>();
+        errs.add(ex.getMessage());
+        ApiError apiError = new ApiError(HttpStatus.BAD_REQUEST, "Cancel Order Error" ,errs);
+        return new ResponseEntity<Object>(apiError, new HttpHeaders(), apiError.getStatus());
+    }
 }

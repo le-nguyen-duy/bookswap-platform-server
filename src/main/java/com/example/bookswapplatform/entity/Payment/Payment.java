@@ -43,6 +43,8 @@ public class Payment {
     @Enumerated(EnumType.STRING)
     private Status status;
 
+    private String vnPayCode;
+
     @OneToMany(mappedBy = "payment")
     private Set<Transaction> transactions;
 

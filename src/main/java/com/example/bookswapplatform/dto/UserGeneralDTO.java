@@ -16,5 +16,7 @@ public class UserGeneralDTO {
     private String name;
     private float totalRate;
     private String imgUrl;
+    private String fireBaseId;
     private String phone;
+    private String email;
 }

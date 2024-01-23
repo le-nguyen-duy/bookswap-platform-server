@@ -20,7 +20,7 @@ import java.util.UUID;
 @RestController
 @RequestMapping("api/v1/user")
 @RequiredArgsConstructor
-@PreAuthorize("hasAuthority('ROLE_USER')")
+@PreAuthorize("hasAnyAuthority('ROLE_USER', 'ROLE_SHIPPER', 'ROLE_ADMIN')")
 public class UserController {
     private final UserService userService;
 

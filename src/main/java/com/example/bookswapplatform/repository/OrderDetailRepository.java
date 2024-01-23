@@ -20,6 +20,7 @@ public interface OrderDetailRepository extends JpaRepository<OrderDetail, UUID> 
     @Query("SELECT od.book FROM OrderDetail od WHERE od.orders = :orders")
     List<Book> findBooksInOrder(@Param("orders") Orders orders);
     List<OrderDetail> findByOrders(Orders orders);
+    OrderDetail findByOrdersAndBook(Orders orders, Book book);
     @Query("SELECT od.book FROM OrderDetail od WHERE od.orders = :orders AND od.book.createBy = :user")
     List<Book> findReceiveBooksInOrder(Orders orders, User user);
 

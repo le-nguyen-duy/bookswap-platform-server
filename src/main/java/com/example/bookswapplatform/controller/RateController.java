@@ -15,7 +15,7 @@ import java.util.UUID;
 @RestController
 @RequestMapping("api/v1/rate")
 @RequiredArgsConstructor
-@PreAuthorize("hasAuthority('ROLE_USER')")
+@PreAuthorize("hasAuthority('ROLE_USER') or hasAuthority('ROLE_ADMIN')")
 public class RateController {
     private final RateService rateService;
 
@@ -33,4 +33,13 @@ public class RateController {
     public ResponseEntity<BaseResponseDTO> getOtherUserRate(@RequestParam UUID userId) {
         return rateService.viewOtherUserRate(userId);
     }
+    @GetMapping("/current-user-create")
+    public ResponseEntity<BaseResponseDTO> getCurrentUserRateCreated(Principal principal) {
+        return rateService.viewRateByCreateBy(principal);
+    }
+    @GetMapping("/other-user-create")
+    public ResponseEntity<BaseResponseDTO> getOtherUserRateCreated(@RequestParam UUID userId) {
+        return rateService.viewOtherUserRateCreate(userId);
+    }
+
 }

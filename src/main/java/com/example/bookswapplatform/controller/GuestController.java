@@ -20,4 +20,8 @@ public class GuestController {
         String uid = principal.getName();
         return userManagementService.setUserClaims(uid);
     }
+    @PostMapping("/change-claims")
+    public ResponseEntity<BaseResponseDTO> changerUserClaims(@RequestParam String firebaseId, @RequestParam String role) throws FirebaseAuthException {
+        return userManagementService.changeUserClaims(firebaseId, role);
+    }
 }

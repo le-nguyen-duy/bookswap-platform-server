@@ -10,13 +10,14 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
+import java.math.BigDecimal;
 import java.security.Principal;
 import java.util.UUID;
 
 @RestController
 @RequestMapping("api/v1/payment")
 @RequiredArgsConstructor
-@PreAuthorize("hasAuthority('ROLE_USER')")
+@PreAuthorize("hasAuthority('ROLE_USER') or hasAuthority('ROLE_ADMIN')")
 public class PaymentController {
     private final PaymentService paymentService;
     @PostMapping("/checkout-request")
@@ -27,5 +28,9 @@ public class PaymentController {
     @PostMapping("/checkout-get-request")
     public ResponseEntity<BaseResponseDTO> checkoutForUserGetRequest (Principal principal, @RequestParam UUID paymentId) {
         return paymentService.checkoutForUserGetRequest(principal, paymentId);
+    }
+    @PostMapping("/add-balance")
+    public ResponseEntity<BaseResponseDTO> createPaymentForAddBalance(Principal principal, @RequestParam BigDecimal amount) {
+        return paymentService.createPaymentForAddBalance(principal, amount);
     }
 }

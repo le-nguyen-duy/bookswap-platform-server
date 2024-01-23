@@ -2,6 +2,9 @@ package com.example.bookswapplatform.service.impl;
 
 import com.example.bookswapplatform.dto.*;
 import com.example.bookswapplatform.entity.Post.Post;
+import com.example.bookswapplatform.entity.Role.Role;
+import com.example.bookswapplatform.entity.SystemLog.Action;
+import com.example.bookswapplatform.entity.SystemLog.Object;
 import com.example.bookswapplatform.entity.User.User;
 import com.example.bookswapplatform.exception.ResourceNotFoundException;
 import com.example.bookswapplatform.repository.PostRepository;
@@ -30,6 +33,8 @@ public class UserServiceImpl implements UserService {
     private final UserRepository userRepository;
     private final PostServiceHelper postServiceHelper;
     private final PostRepository postRepository;
+    private final SystemServiceImpl systemService;
+
     @Override
     public ResponseEntity<BaseResponseDTO> updateUser(Principal principal, UpdateUserRequest updateUserRequest) {
         User user = userRepository.findByFireBaseUid(principal.getName())
@@ -53,7 +58,7 @@ public class UserServiceImpl implements UserService {
 
         user.setUpdateBy(user.getEmail());
 
-        if(updateUserRequest.getDateOfBirth() != null) {
+        if (updateUserRequest.getDateOfBirth() != null) {
             try {
                 user.setDateOfBirth(DateTimeUtils.convertStringToLocalDate(updateUserRequest.getDateOfBirth()));
             } catch (ParseException e) {
@@ -62,16 +67,17 @@ public class UserServiceImpl implements UserService {
         }
 
         userRepository.save(user);
+        systemService.saveSystemLog(user, Object.PROFILE, Action.UPDATE);
         return ResponseEntity.ok(new BaseResponseDTO(LocalDateTime.now(), HttpStatus.OK, "Update success"));
 
     }
 
     @Override
-    public ResponseEntity<BaseResponseDTO> userProfile(Principal principal ) {
+    public ResponseEntity<BaseResponseDTO> userProfile(Principal principal) {
         User user = userRepository.findByFireBaseUid(principal.getName())
                 .orElseThrow(() -> new ResourceNotFoundException("User not found!"));
 
-        return ResponseEntity.ok(new BaseResponseDTO(LocalDateTime.now(), HttpStatus.OK, "Success",null,convertToDTO(user)));
+        return ResponseEntity.ok(new BaseResponseDTO(LocalDateTime.now(), HttpStatus.OK, "Success", null, convertToDTO(user)));
     }
 
     @Override
@@ -81,24 +87,28 @@ public class UserServiceImpl implements UserService {
         //List<Post> posts = postRepository.findByCreateBy(user);
         UserInfoDTO userInfoDTO = convertToUserInfoDTO(user);
 
-        return ResponseEntity.ok(new BaseResponseDTO(LocalDateTime.now(), HttpStatus.OK, "Success",null,userInfoDTO));
+        return ResponseEntity.ok(new BaseResponseDTO(LocalDateTime.now(), HttpStatus.OK, "Success", null, userInfoDTO));
     }
 
     @Override
     public ResponseEntity<BaseResponseDTO> reportUser() {
         return null;
     }
+
     public UserDTO convertToDTO(User user) {
-        UserDTO userDTO = modelMapper.map(user,UserDTO.class);
+        UserDTO userDTO = modelMapper.map(user, UserDTO.class);
         userDTO.setPhoneNum(user.getPhone());
-        UserWalletDTO userWalletDTO = modelMapper.map(user.getUserWallet(),UserWalletDTO.class);
+        UserWalletDTO userWalletDTO = modelMapper.map(user.getUserWallet(), UserWalletDTO.class);
         userDTO.setNumOfRate(user.getRates().size());
         userDTO.setUserWalletDTO(userWalletDTO);
+        userDTO.setFireBaseId(user.getFireBaseUid());
+        Role role = user.getRole();
+        userDTO.setRole(role.getName());
         return userDTO;
     }
 
-    public UserInfoDTO convertToUserInfoDTO (User user) {
-        if(user == null ) {
+    public UserInfoDTO convertToUserInfoDTO(User user) {
+        if (user == null) {
             return null;
         }
 //        if(user.getOrdersList().isEmpty()) {
@@ -107,17 +117,18 @@ public class UserServiceImpl implements UserService {
 //        }
         int num = 0;
         UserInfoDTO userInfoDTO = modelMapper.map(user, UserInfoDTO.class);
-        for (Post post: user.getPostList()
+        for (Post post : user.getPostList()
         ) {
             num++;
         }
+        userInfoDTO.setFireBaseId(user.getFireBaseUid());
         userInfoDTO.setNumOfPost(num);
         userInfoDTO.setPhoneNum(user.getPhone());
         userInfoDTO.setEmail(user.getEmail());
         userInfoDTO.setNumOfRate(user.getRates().size());
         List<Post> posts = user.getPostList();
         List<PostGeneralDTO> postGeneralDTOS = new ArrayList<>();
-        if(posts.isEmpty()) {
+        if (posts.isEmpty()) {
             userInfoDTO.setPostGeneralDTOs(null);
         } else {
             for (Post post : posts

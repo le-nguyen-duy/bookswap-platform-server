@@ -26,26 +26,33 @@ public class PostController {
     private final PostService postService;
 
     @PostMapping("/create")
-    @PreAuthorize("hasAuthority('ROLE_USER')")
+    @PreAuthorize("hasAuthority('ROLE_USER') or hasAuthority('ROLE_ADMIN')")
     public ResponseEntity<BaseResponseDTO> createPost (Principal principal, @Valid @RequestBody PostRequest postRequest) {
         return postService.createPost(principal, postRequest);
     }
 
     @Operation(description = "This api is for user get their active post info")
     @GetMapping("/active")
-    @PreAuthorize("hasAuthority('ROLE_USER')")
+    @PreAuthorize("hasAuthority('ROLE_USER') or hasAuthority('ROLE_ADMIN')")
     public ResponseEntity<BaseResponseDTO> getUserActivePost (Principal principal) {
         return postService.getUserActivePost(principal);
     }
 
+    @Operation(description = "This api is for user get their locked post info")
+    @GetMapping("/locked")
+    @PreAuthorize("hasAuthority('ROLE_USER') or hasAuthority('ROLE_ADMIN')")
+    public ResponseEntity<BaseResponseDTO> getUserLockPost (Principal principal) {
+        return postService.getUserLockedPost(principal);
+    }
+
     @Operation(description = "This api is for user get their deactivate post info")
     @GetMapping("/deactivate")
-    @PreAuthorize("hasAuthority('ROLE_USER')")
+    @PreAuthorize("hasAuthority('ROLE_USER') or hasAuthority('ROLE_ADMIN')")
     public ResponseEntity<BaseResponseDTO> getUserDeactivePost (Principal principal) {
         return postService.getUserDeactivePost(principal);
     }
 
-    @GetMapping("/filter")
+    @PostMapping("/filter")
     public ResponseEntity<BaseResponseDTO> filter (
             @Min(value = 0, message = "pageNumber must be greater than or equal to 0")
             @RequestParam(defaultValue = "0") int page,
@@ -70,7 +77,7 @@ public class PostController {
         return postService.getPostDetail(id);
     }
     @PutMapping("/modify")
-    @PreAuthorize("hasAuthority('ROLE_USER')")
+    @PreAuthorize("hasAuthority('ROLE_USER') or hasAuthority('ROLE_ADMIN')")
     public ResponseEntity<BaseResponseDTO> modifyPost (Principal principal,
                                                       @RequestParam UUID postId,
                                                       @Valid @RequestBody PostUpdateRequest postUpdateRequest
@@ -79,7 +86,7 @@ public class PostController {
     }
 
     @PutMapping("/modify-book")
-    @PreAuthorize("hasAuthority('ROLE_USER')")
+    @PreAuthorize("hasAuthority('ROLE_USER') or hasAuthority('ROLE_ADMIN')")
     public ResponseEntity<BaseResponseDTO> modifyBook (Principal principal,
                                                        @RequestParam UUID postId,
                                                        @Valid @RequestBody PostUpdateBookRequest postUpdateBookRequest) {
@@ -87,8 +94,8 @@ public class PostController {
     }
 
     @DeleteMapping("delete")
-    @PreAuthorize("hasAuthority('ROLE_USER')")
-    public ResponseEntity<BaseResponseDTO> deletePost (@RequestParam UUID postId) {
-        return postService.deletePost(postId);
+    @PreAuthorize("hasAuthority('ROLE_USER') or hasAuthority('ROLE_ADMIN')")
+    public ResponseEntity<BaseResponseDTO> deletePost (Principal principal, @RequestParam UUID postId) {
+        return postService.deletePost(principal, postId);
     }
 }

@@ -40,7 +40,16 @@ public class Orders {
     private BigDecimal bookPrice;
     private BigDecimal senderShipPrice;
     private BigDecimal receiverShipPrice;
-    private BigDecimal fee;
+
+    @Builder.Default
+    @ColumnDefault("20000")
+    private BigDecimal shipPrice = BigDecimal.valueOf(20000);
+
+    @Builder.Default
+    @ColumnDefault("2000")
+    private BigDecimal fee = BigDecimal.valueOf(2000) ;
+    private String senderPercent;
+    private String receiverPercent;
 
     private String note;
 
@@ -52,6 +61,8 @@ public class Orders {
     @JoinColumn(name = "district_id")
     private District district;
 
+    private String locationDetail;
+
     @Column(columnDefinition = "boolean")
     @ColumnDefault("false")
     private boolean isConfirm;
@@ -60,13 +71,9 @@ public class Orders {
     @ColumnDefault("false")
     private boolean isPayment;
 
-    @JsonFormat(shape = JsonFormat.Shape.STRING, pattern = DateTimeUtils.DATE_FORMAT)
-    @DateTimeFormat(pattern = DateTimeUtils.DATE_FORMAT)
-    private LocalDate starShipDate;
-
-    @JsonFormat(shape = JsonFormat.Shape.STRING, pattern = DateTimeUtils.DATE_FORMAT)
-    @DateTimeFormat(pattern = DateTimeUtils.DATE_FORMAT)
-    private LocalDate finishShipDate;
+    @Column(columnDefinition = "boolean")
+    @ColumnDefault("false")
+    private boolean isShipping;
 
     @CreatedDate
     @JsonFormat(shape = JsonFormat.Shape.STRING, pattern = DateTimeUtils.DATETIME_FORMAT)
@@ -102,6 +109,12 @@ public class Orders {
     @OneToMany(mappedBy = "orders" ,cascade = CascadeType.ALL)
     private Set<Payment> payments;
 
-    @OneToOne(mappedBy = "orders")
-    private Rate rate;
+    @OneToMany(mappedBy = "orders",cascade = CascadeType.ALL)
+    private Set<Rate> rates;
+
+    @OneToOne(mappedBy = "orders", cascade = CascadeType.ALL)
+    private CancelOrderHistory cancellationHistory;
+
+    @OneToMany(mappedBy = "orders", cascade = CascadeType.ALL )
+    private Set<OrderShipping> shippingOrders;
 }

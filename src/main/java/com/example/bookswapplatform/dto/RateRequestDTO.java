@@ -22,5 +22,4 @@ public class RateRequestDTO {
     private int rateNumber;
     @Nullable
     private String description;
-    private Set<UUID> rateCardIds;
 }

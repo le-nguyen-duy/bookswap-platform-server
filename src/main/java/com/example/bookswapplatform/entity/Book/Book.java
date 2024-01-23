@@ -6,12 +6,14 @@ import com.example.bookswapplatform.entity.User.User;
 import com.example.bookswapplatform.utils.DateTimeUtils;
 import com.fasterxml.jackson.annotation.JsonFormat;
 import jakarta.persistence.*;
+import jakarta.validation.constraints.Digits;
 import jakarta.validation.constraints.Pattern;
 import jakarta.validation.constraints.Size;
 import lombok.*;
 import org.hibernate.annotations.ColumnDefault;
 import org.hibernate.annotations.UuidGenerator;
 import org.hibernate.annotations.Where;
+import org.hibernate.validator.constraints.Range;
 import org.springframework.data.annotation.CreatedDate;
 import org.springframework.data.annotation.LastModifiedDate;
 import org.springframework.data.jpa.domain.support.AuditingEntityListener;
@@ -42,9 +44,9 @@ public class Book {
 
     private String publisher;
 
-    @JsonFormat(shape = JsonFormat.Shape.STRING, pattern = DateTimeUtils.DATE_FORMAT)
-    @DateTimeFormat(pattern = DateTimeUtils.DATE_FORMAT)
-    private LocalDate publishedDate;
+    @Digits(integer = 4, fraction = 0, message = "Please enter a valid year")
+    @Range(min = 1900, max = 2100, message = "Year must be between 1900 and 2100")
+    private Integer year;
 
     private String isbn;
 

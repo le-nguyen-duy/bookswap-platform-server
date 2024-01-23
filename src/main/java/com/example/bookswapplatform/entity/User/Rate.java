@@ -3,6 +3,7 @@ package com.example.bookswapplatform.entity.User;
 import com.example.bookswapplatform.entity.Order.Orders;
 import com.example.bookswapplatform.utils.DateTimeUtils;
 import com.fasterxml.jackson.annotation.JsonFormat;
+import jakarta.annotation.Nullable;
 import jakarta.persistence.*;
 import jakarta.validation.constraints.Max;
 import jakarta.validation.constraints.Min;
@@ -39,8 +40,6 @@ public class Rate {
 
     private String description;
 
-    @OneToMany(mappedBy = "rate")
-    private Set<RateCard> rateCards;
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "user_id")
     private User user;
@@ -61,7 +60,7 @@ public class Rate {
 
     private String updateBy;
 
-    @OneToOne(cascade = CascadeType.ALL)
-    @JoinColumn(name = "order_id", referencedColumnName = "id")
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "order_id")
     private Orders orders;
 }

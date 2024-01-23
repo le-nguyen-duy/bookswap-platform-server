@@ -10,6 +10,7 @@ import lombok.Setter;
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
+import java.util.Set;
 import java.util.UUID;
 
 @Getter
@@ -22,9 +23,11 @@ public class OrderGeneralDTO {
     private UserOrderDTO userOrderDTO;
     private String cancelBy;
     private PostGeneralDTO postGeneralDTO;
+    private Set<BookGeneralDTO> bookGeneralDTOS;
     private OrderStatus orderStatus;
     @JsonFormat(shape = JsonFormat.Shape.STRING, pattern = DateTimeUtils.DATETIME_FORMAT)
     private LocalDateTime createDate;
+    private LocalDateTime cancelDate;
     private boolean isPayment;
     private boolean isConfirm;
 

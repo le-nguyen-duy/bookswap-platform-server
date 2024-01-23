@@ -2,10 +2,14 @@ package com.example.bookswapplatform.entity.User;
 
 import com.example.bookswapplatform.common.Gender;
 import com.example.bookswapplatform.entity.Book.Book;
+import com.example.bookswapplatform.entity.Notification;
+import com.example.bookswapplatform.entity.Order.CancelOrderHistory;
+import com.example.bookswapplatform.entity.Order.OrderShipping;
 import com.example.bookswapplatform.entity.Order.Orders;
 import com.example.bookswapplatform.entity.Payment.UserWallet;
 import com.example.bookswapplatform.entity.Post.Post;
 import com.example.bookswapplatform.entity.Role.Role;
+import com.example.bookswapplatform.entity.SystemLog.SystemLog;
 import com.example.bookswapplatform.utils.DateTimeUtils;
 import com.fasterxml.jackson.annotation.JsonFormat;
 import jakarta.persistence.*;
@@ -16,7 +20,6 @@ import lombok.*;
 import org.hibernate.annotations.ColumnDefault;
 import org.hibernate.annotations.UuidGenerator;
 import org.springframework.data.annotation.CreatedDate;
-import org.springframework.data.annotation.LastModifiedBy;
 import org.springframework.data.annotation.LastModifiedDate;
 import org.springframework.data.jpa.domain.support.AuditingEntityListener;
 import org.springframework.format.annotation.DateTimeFormat;
@@ -27,6 +30,7 @@ import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.Collection;
 import java.util.List;
+import java.util.Set;
 import java.util.UUID;
 
 @Entity
@@ -67,6 +71,7 @@ public class User implements UserDetails {
     private Gender gender;
     private String city;
     private String district;
+    private String locationDetail;
 
     @Column(columnDefinition = "boolean")
     @ColumnDefault("true")
@@ -107,7 +112,7 @@ public class User implements UserDetails {
     @OneToMany(mappedBy = "createBy")
     private List<Rate> rateCreated;
 
-    @OneToMany(mappedBy = "createBy")
+    @OneToMany(mappedBy = "createBy", fetch = FetchType.LAZY)
     private List<Orders> ordersList;
 
     @OneToMany(mappedBy = "createBy")
@@ -115,6 +120,18 @@ public class User implements UserDetails {
 
     @OneToOne(mappedBy = "createBy")
     private UserWallet userWallet;
+
+    @OneToMany(mappedBy = "user", cascade = CascadeType.ALL)
+    private Set<CancelOrderHistory> cancellationHistories;
+
+    @OneToMany(mappedBy = "user", cascade = CascadeType.ALL)
+    private Set<OrderShipping> shippingOrders;
+
+    @OneToMany(mappedBy = "user")
+    private Set<SystemLog> systemLogs;
+
+    @OneToMany(mappedBy = "user")
+    private Set<Notification> notifications;
 
     @Override
     public Collection<? extends GrantedAuthority> getAuthorities() {
@@ -128,7 +145,7 @@ public class User implements UserDetails {
 
     @Override
     public String getUsername() {
-        return email;
+        return String.valueOf(id);
     }
 
     @Override

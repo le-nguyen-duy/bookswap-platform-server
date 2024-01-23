@@ -2,10 +2,12 @@ package com.example.bookswapplatform.dto;
 
 import com.example.bookswapplatform.utils.DateTimeUtils;
 import com.fasterxml.jackson.annotation.JsonFormat;
+import jakarta.validation.constraints.Digits;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
+import org.hibernate.validator.constraints.Range;
 
 import java.math.BigDecimal;
 import java.time.LocalDate;
@@ -21,8 +23,7 @@ public class BookDTO {
     private String title;
     private String description;
     private String publisher;
-    @JsonFormat(shape = JsonFormat.Shape.STRING, pattern = DateTimeUtils.DATE_FORMAT)
-    private LocalDate publishedDate;
+    private Integer year;
     private String isbn;
     private String language;
     private int pageCount;

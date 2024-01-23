@@ -13,6 +13,7 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
 
+import java.math.BigDecimal;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
@@ -44,6 +45,7 @@ public class OrderRequest {
     private String city;
     @Nullable
     private String district;
+    private String locationDetail;
     public String getPercentPay() {
         return percentPay;
     }

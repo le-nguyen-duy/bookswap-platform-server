@@ -25,6 +25,9 @@ public class PostRequest {
     @NotEmpty
     private String district;
     @NotEmpty
+    private String locationDetail;
+    @NotEmpty
     private List<BookPriceDTO> bookPriceDTOS;
+    private Set<String> categories;
 
 }

@@ -3,6 +3,7 @@ package com.example.bookswapplatform.security.firebase.service.impl;
 import com.example.bookswapplatform.dto.BaseResponseDTO;
 import com.example.bookswapplatform.entity.Payment.UserWallet;
 import com.example.bookswapplatform.entity.User.User;
+import com.example.bookswapplatform.exception.ResourceNotFoundException;
 import com.example.bookswapplatform.repository.RoleRepository;
 import com.example.bookswapplatform.repository.UserRepository;
 import com.example.bookswapplatform.repository.UserWalletRepository;
@@ -17,6 +18,7 @@ import org.springframework.security.core.GrantedAuthority;
 import org.springframework.stereotype.Service;
 
 import java.math.BigDecimal;
+import java.security.Principal;
 import java.time.LocalDateTime;
 import java.util.*;
 import java.util.concurrent.atomic.AtomicInteger;
@@ -45,7 +47,7 @@ public class UserManagementServiceImpl implements UserManagementService {
             userRepository.save(user);
             UserWallet userWallet = new UserWallet();
             userWallet.setCreateBy(user);
-            userWallet.setBalance(BigDecimal.valueOf(200000));
+            userWallet.setBalance(BigDecimal.valueOf(0));
             userWalletRepository.save(userWallet);
             //user.setUserWallet(userWallet);
 
@@ -57,6 +59,19 @@ public class UserManagementServiceImpl implements UserManagementService {
 
         //revoked idToken để client dùng refesh token tạo 1 idToken mới có chứa claims
 
+    }
+
+    @Override
+    public ResponseEntity<BaseResponseDTO> changeUserClaims(String firebaseId, String role) throws FirebaseAuthException {
+        //String uid = principal.getName();
+        UserRecord userRecord = firebaseAuth.getUser(firebaseId);
+        User user = userRepository.findByFireBaseUid(firebaseId)
+                .orElseThrow(() -> new ResourceNotFoundException("User not found!"));
+        user.setRole(roleRepository.findByName(role));
+        userRepository.save(user);
+        Map<String, Object> claims = convertAuthoritiesToClaims(user.getAuthorities());
+        firebaseAuth.setCustomUserClaims(firebaseId, claims);
+        return ResponseEntity.ok(new BaseResponseDTO(LocalDateTime.now(), HttpStatus.OK, "Successfully"));
     }
 
     //Chuyển danh sách authorities thành claims

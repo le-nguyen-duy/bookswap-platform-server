@@ -4,6 +4,8 @@ import com.fasterxml.jackson.annotation.JsonIgnore;
 import jakarta.annotation.Nullable;
 import lombok.*;
 
+import java.util.Set;
+
 @Getter
 @Setter
 @AllArgsConstructor
@@ -34,6 +36,8 @@ public class FilterRequest {
     private String exchangeMethod;
     @Nullable
     private String language;
+    @Nullable
+    private Set<String> categories;
 
     public FilterRequest(String city) {
         this.city = city;

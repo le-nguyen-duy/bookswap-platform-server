@@ -2,7 +2,6 @@ package com.example.bookswapplatform.security;
 
 import com.example.bookswapplatform.exception.CustomAccessDeniedHandler;
 import lombok.RequiredArgsConstructor;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.security.config.annotation.method.configuration.EnableMethodSecurity;
@@ -38,12 +37,10 @@ public class SecurityConfiguration {
                                 antMatcher("/api/v1/guest/**"),
                                 antMatcher("/api/v1/post/filter"),
                                 antMatcher("/api/v1/post/id"),
+                                antMatcher("/api/v1/vn-pay/**"),
                                 antMatcher("/swagger-ui/**"),
                                 antMatcher("/swagger-ui.html"),
-//                                antMatcher("/v2/api-docs/**"),
                                 antMatcher("/v3/api-docs/**"),
-//                                antMatcher("/swagger-resources"),
-//                                antMatcher("/swagger-resources/**"),
                                 antMatcher("/configuration/ui"),
                                 antMatcher("/configuration/security")).permitAll()
                         .requestMatchers(mvcMatcherBuilder.pattern("/api/v1/user/**")).hasAnyAuthority("ROLE_USER")

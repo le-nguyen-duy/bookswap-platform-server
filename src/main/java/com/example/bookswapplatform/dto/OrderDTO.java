@@ -24,6 +24,8 @@ public class OrderDTO {
     private BigDecimal bookPrice;
     private BigDecimal senderShipPrice;
     private BigDecimal receiverShipPrice;
+    private String senderPercent;
+    private String receiverPercent;
     private BigDecimal fee;
     private String note;
     private boolean isConfirm;
@@ -38,6 +40,8 @@ public class OrderDTO {
     private LocalDateTime createDate;
     @JsonFormat(shape = JsonFormat.Shape.STRING, pattern = DateTimeUtils.DATETIME_FORMAT)
     private LocalDateTime updateDate;
+    @JsonFormat(shape = JsonFormat.Shape.STRING, pattern = DateTimeUtils.DATETIME_FORMAT)
+    private LocalDateTime cancelDate;
     private UserOrderDTO userOrderDTO;
     private String cancelBy;
     private OrderStatus orderStatus;

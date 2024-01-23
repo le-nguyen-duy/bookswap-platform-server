@@ -18,4 +18,5 @@ public class BookGeneralDTO {
     private String coverImg;
     private String createBy;
     private BigDecimal price;
+    private String category;
 }
